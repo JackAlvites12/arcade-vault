@@ -35,16 +35,10 @@ no backend yet in this repo. `README.md` also names a spec-driven workflow for t
 `fernando-skills` `/spec` and `/spec-impl` commands via `npx skills@latest add Klerith/fernando-skills`),
 but that skills package is not installed in this environment yet.
 
-## Commands
 
-```bash
-npm run dev      # start dev server (Turbopack, per Next.js 16 default)
-npm run build
-npm run start
-npm run lint      # eslint (flat config, eslint-config-next core-web-vitals + typescript)
-```
+## Skills
 
-No test runner is configured yet.
+Usa siempre /frontend-design para diseñar la interfaz de usuario.
 
 ## Architecture notes
 
