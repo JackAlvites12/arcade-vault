@@ -140,6 +140,41 @@ a { color: inherit; text-decoration: none; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== scroll-reveal (Home page only) ===== */
+.home-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+.home-reveal.in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ===== hero floating silhouettes + scroll arrow (Home page only) ===== */
+.silo {
+  animation: siloFloat 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+@keyframes siloFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(2deg); }
+}
+.hero-arrow {
+  color: var(--cyan);
+  animation: heroBounce 1.6s ease-in-out infinite;
+}
+@keyframes heroBounce {
+  50% { transform: translateY(6px); }
+}
+
 /* ===== CRT screen + placeholder game arena (decorative) ===== */
 .crt {
   position: relative;

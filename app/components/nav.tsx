@@ -7,12 +7,14 @@ import { useSession } from "@/app/session-context";
 import { Button, ButtonLink } from "@/app/components/button";
 
 const NAV_LINKS = [
+  { href: "/", label: "Inicio", match: ["/"] },
   {
     href: "/biblioteca",
     label: "Biblioteca",
     match: ["/biblioteca", "/juego", "/jugar"],
   },
   { href: "/salon", label: "Salón de la Fama", match: ["/salon"] },
+  { href: "/acerca", label: "Acerca de", match: ["/acerca"] },
 ];
 
 export function Nav() {
@@ -21,12 +23,12 @@ export function Nav() {
   const [open, setOpen] = useState(false);
 
   const isActive = (match: string[]) =>
-    match.some((m) => pathname.startsWith(m));
+    match.some((m) => (m === "/" ? pathname === "/" : pathname.startsWith(m)));
 
   return (
     <>
       <nav className="sticky top-0 z-50 flex items-center gap-6 px-8 py-3.5 border-b border-line bg-linear-to-b from-[rgba(10,10,15,0.92)] to-[rgba(10,10,15,0.78)] backdrop-blur-md">
-        <Link href="/biblioteca" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <span className="w-7 h-7 border border-white/20 [background:linear-gradient(45deg,var(--magenta)_0_50%,transparent_50%),linear-gradient(-45deg,var(--cyan)_0_50%,transparent_50%)] bg-blend-screen shadow-[0_0_12px_rgba(0,245,255,0.55),inset_0_0_6px_rgba(255,0,110,0.5)]" />
           <span className="font-pixel text-xs tracking-[0.12em] whitespace-nowrap">
             <span className="text-cyan [text-shadow:0_0_6px_rgba(0,245,255,0.65),0_0_16px_rgba(0,245,255,0.45)]">
@@ -62,11 +64,15 @@ export function Nav() {
         </div>
 
         {user ? (
-          <Button variant="ghost" className="ml-4" onClick={signOut}>
+          <Button
+            variant="ghost"
+            className="ml-4 hidden lg:inline-flex"
+            onClick={signOut}
+          >
             {user.name} ▾
           </Button>
         ) : (
-          <ButtonLink href="/auth" className="ml-4">
+          <ButtonLink href="/auth" className="ml-4 hidden! lg:inline-flex!">
             Iniciar Sesión
           </ButtonLink>
         )}
