@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Idioma
+
+Responde siempre en español, en todas las sesiones.
+
 ## About the project
 
 Arcade Vault (`README.md`) is a Spanish-language retro arcade platform: play games online and compete on
