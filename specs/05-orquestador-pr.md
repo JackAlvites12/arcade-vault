@@ -1,6 +1,6 @@
 # 05 — Skill `/pr`: orquestador de commits y Pull Requests
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** Ninguno (skill de herramientas, no forma parte de la cadena de specs de la app)
 > **Fecha:** 2026-07-26
 > **Objetivo:** Crear la skill `/pr <commit-only|pr-only|full> [rama-base]`, que arma commits locales agrupados por feature a partir del diff y, en los modos que lo requieran, pushea la rama y abre `gh pr create --web` para terminar de crear el PR, siempre bajo un único plan de confirmación por corrida.
@@ -49,17 +49,17 @@ Este spec no introduce estructuras de datos nuevas ni persistencia. No hay tabla
 
 ## Criterios de aceptación
 
-- [ ] Existe `.claude/skills/pr/SKILL.md` con frontmatter válido (`name: pr`, `argument-hint: <commit-only|pr-only|full> [rama-base]`, `disable-model-invocation: true`, `allowed-tools` acotado a los comandos git/gh listados en el plan).
-- [ ] `/pr commit-only` con cambios de ≥2 features distintas en el working tree propone ≥2 commits separados, cada uno con mensaje en formato Conventional Commits, y no ejecuta ningún `git add`/`git commit` hasta que el usuario confirma el plan mostrado.
-- [ ] `/pr commit-only`/`full` nunca usan `git add -A` ni `git add .` — solo agregan los archivos específicos de cada grupo propuesto.
-- [ ] `/pr` con un primer argumento que no sea `commit-only`, `pr-only` o `full` muestra el uso correcto y se detiene sin tocar git/gh.
-- [ ] `/pr pr-only` con working tree sucio (cambios sin commitear) se detiene sin pushear ni crear PR, y sugiere `commit-only` o `full`.
-- [ ] `/pr pr-only` con commits locales pendientes de push y working tree limpio: pushea la rama actual y corre `gh pr create --web` con `--base main` por defecto.
-- [ ] `/pr full feat/01-cong` usa `feat/01-cong` como rama base tanto para el diff que arma título/cuerpo del PR como para `--base` en `gh pr create --web`.
-- [ ] El cuerpo del PR generado empieza con el encabezado `## Summary` seguido de bullets.
-- [ ] `/pr full` ejecuta commits agrupados, push y `gh pr create --web` con una sola confirmación del usuario (sin pausa intermedia entre commitear y pushear/crear el PR).
-- [ ] Si no hay commits nuevos respecto a la rama base, `/pr pr-only`/`full` no pushean ni intentan crear PR, e informan explícitamente que no hay nada que enviar.
-- [ ] La skill no lee `specs/` ni valida estado de ningún spec.
+- [x] Existe `.claude/skills/pr/SKILL.md` con frontmatter válido (`name: pr`, `argument-hint: <commit-only|pr-only|full> [rama-base]`, `disable-model-invocation: true`, `allowed-tools` acotado a los comandos git/gh listados en el plan).
+- [x] `/pr commit-only` con cambios de ≥2 features distintas en el working tree propone ≥2 commits separados, cada uno con mensaje en formato Conventional Commits, y no ejecuta ningún `git add`/`git commit` hasta que el usuario confirma el plan mostrado.
+- [x] `/pr commit-only`/`full` nunca usan `git add -A` ni `git add .` — solo agregan los archivos específicos de cada grupo propuesto.
+- [x] `/pr` con un primer argumento que no sea `commit-only`, `pr-only` o `full` muestra el uso correcto y se detiene sin tocar git/gh.
+- [x] `/pr pr-only` con working tree sucio (cambios sin commitear) se detiene sin pushear ni crear PR, y sugiere `commit-only` o `full`.
+- [x] `/pr pr-only` con commits locales pendientes de push y working tree limpio: pushea la rama actual y corre `gh pr create --web` con `--base main` por defecto.
+- [x] `/pr full feat/01-cong` usa `feat/01-cong` como rama base tanto para el diff que arma título/cuerpo del PR como para `--base` en `gh pr create --web`.
+- [x] El cuerpo del PR generado empieza con el encabezado `## Summary` seguido de bullets.
+- [x] `/pr full` ejecuta commits agrupados, push y `gh pr create --web` con una sola confirmación del usuario (sin pausa intermedia entre commitear y pushear/crear el PR).
+- [x] Si no hay commits nuevos respecto a la rama base, `/pr pr-only`/`full` no pushean ni intentan crear PR, e informan explícitamente que no hay nada que enviar.
+- [x] La skill no lee `specs/` ni valida estado de ningún spec.
 
 ## Decisiones tomadas y descartadas
 
