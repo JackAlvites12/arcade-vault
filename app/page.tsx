@@ -12,7 +12,7 @@ import {
 } from "@/app/components/home-sections";
 
 export default function Home() {
-  useReveal();
+  useReveal(".home-reveal");
   return (
     <div className="fade-in">
       <HomeHero />
