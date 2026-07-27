@@ -4,52 +4,89 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
-## Idioma
-
-Responde siempre en español, en todas las sesiones.
-
 ## About the project
 
-Arcade Vault (`README.md`) is a Spanish-language retro arcade platform: play games online and compete on
-score leaderboards. The repo is currently a fresh `create-next-app` scaffold — `app/` only has the default
-boilerplate page — but `references/templates/` (already unzipped from the original
-`iISLvhOSlu40WkgeVXdW_resources.zip`, since deleted) contains the actual product spec as a working
-prototype. Treat it as the design/behavior reference when building out the real Next.js app:
+Arcade Vault is a retro arcade web platform: a catalog of browser-playable minigames where users compete
+for the highest score on leaderboards. It combines a browsable catalog (`/biblioteca`), per-game detail
+pages with a leaderboard, and a generic player (`/jugar/[id]`) that mounts each game's specific engine.
+So far only Asteroids has a real game engine; every other game still uses a generic placeholder.
+Login/registration and user persistence are backed by Supabase, though the scores shown are still
+deterministic mock data.
 
-- `Arcade Vault.html` — standalone shell that loads React 18 + Babel standalone from CDN (no build step) and
-  the `.jsx` files below via `<script type="text/babel">`. This is a throwaway prototyping harness, not a
-  pattern to replicate in the Next.js app (use real App Router routes/components instead of the hash-based
-  `route` state in `app.jsx`).
-- `data.jsx` — mock domain data: `GAMES` (id, title, cat, cover, color, best score, plays), `CATS` (chip
-  filters — `TODOS` plus ARCADE/PUZZLE/SHOOTER/VERSUS), `PLAYERS`, and `seededScores()`, a
-  linear-congruential PRNG that fabricates a full leaderboard (ranks, names, scores, dates) from a numeric
-  seed — there's no real score persistence to reference.
-- `nav.jsx` / `app.jsx` — top nav and the route switch: `biblioteca` (library/catalog) → `detalle` (game
-  detail) → `player` (game player) → `salon` (hall of fame / leaderboard), plus `auth` (login/register).
-- `biblioteca.jsx`, `detalle.jsx`, `reproductor.jsx`, `salon.jsx`, `auth.jsx` — one file per screen.
-- `styles.css` — the neon/CRT visual language (colors, fonts: Press Start 2P, Courier Prime, JetBrains Mono).
+## Idioma
 
-None of the 8 games in `GAMES` have real gameplay: `reproductor.jsx` (`GamePlayer`) is a single generic
-player shared by every game — a CSS arena with floating divs plus a `setInterval` that adds a random score
-every 220ms. There is no per-game logic anywhere in the prototype to port; actual game engines/rules for
-each title need to be designed and built from scratch.
+Always answer in Spanish, in all sessions.
 
-Auth state and scores in the prototype are stored in `localStorage` only (`av_user`, `av_scores`) — there is
-no backend yet in this repo. `README.md` also names a spec-driven workflow for this project (Klerith's
-`fernando-skills` `/spec` and `/spec-impl` commands via `npx skills@latest add Klerith/fernando-skills`),
-but that skills package is not installed in this environment yet.
+## Spec-driven workflow
 
+This project follows spec-driven development via project skills in `.claude/skills/` (mirrored in
+`.agents/skills/`, installed from `Klerith/fernando-skills` — see `skills-lock.json`):
+
+- `/spec` — designs a new spec interactively (clarifying questions first, no code) and saves it under
+  `specs/NN-name.md` using `specs/.../template.md`. A spec only moves to implementation once its status
+  is "Approved".
+- `/spec-impl <NN-spec-name>` — reads the approved spec, creates/checks out a branch named after it, and
+  implements it step by step with pauses to review diffs.
+- `/pr` — orchestrates committing work and opening the PR once a spec is implemented (see
+  `specs/05-orquestador-pr.md`).
+
+Existing specs in `specs/` (read the two most recent before writing a new one, per the `/spec` skill):
+`01-mvp-visual`, `02-home`, `03-about-contact-form`, `04-supabase-setup`, `05-orquestador-pr`,
+`06-asteroides`.
 
 ## Skills
 
-Usa siempre /frontend-design para diseñar la interfaz de usuario.
+Always use /frontend-design to design the user interface.
 
-## Architecture notes
+Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4 (`@import "tailwindcss"` + `@theme inline` in
+`app/globals.css`, no `tailwind.config.js`). Path alias `@/*` → repo root.
 
-- Next.js 16 App Router (`app/` directory), React 19, TypeScript, Tailwind CSS v4 (imported directly in
-  `app/globals.css` via `@import "tailwindcss"` and `@theme inline` — no `tailwind.config.js`).
-- Path alias `@/*` → repo root (`tsconfig.json`).
-- **This Next.js version has breaking changes vs. training data.** Before writing framework-specific code
-  (routing, data fetching, config, fonts, images, etc.), read the matching guide under
-  `node_modules/next/dist/docs/` (sections: `01-app`, `02-pages`, `03-architecture`, `04-community`) rather
-  than relying on prior Next.js knowledge.
+**This Next.js version has breaking changes vs. training data.** Before writing framework-specific code
+(routing, data fetching, config, fonts, images, etc.), read the matching guide under
+`node_modules/next/dist/docs/` (sections: `01-app`, `02-pages`, `03-architecture`, `04-community`) rather
+than relying on prior Next.js knowledge.
+
+### Game catalog vs. game detail vs. game player
+
+These are three distinct routes, easy to confuse by name:
+
+- `app/biblioteca/page.tsx` — catalog/library, filterable by `CATS`.
+- `app/juego/[id]/page.tsx` — **server** component, game detail page (cover, description, leaderboard via
+  `seededScores`). Links to `/jugar/[id]`.
+- `app/jugar/[id]/page.tsx` — **client** component, the actual game player (`"use client"`). Renders the
+  HUD (score/lives/level/pause) shared by every game, and swaps in per-game gameplay by `game.id`.
+
+All game metadata (`GAMES`, `CATS`, `PLAYERS`, `seededScores`) lives in `app/data/games.ts` — still mock
+data, no backend persistence for scores yet even though Supabase is wired up (see below).
+
+### Per-game engines
+
+Only `asteroides` has a real engine so far: `app/games/asteroides/engine.ts` (pure game-state simulation —
+ship/asteroid physics, collisions, score/lives/level) driven by `app/games/asteroides/asteroids-canvas.tsx`
+(`<canvas>` rendering + input, exposes an imperative handle for `restart`/`forceGameOver`, and reports an
+`EngineSnapshot` up via `onSnapshot`). `app/jugar/[id]/page.tsx` special-cases `game.id === "asteroides"` to
+mount `AsteroidsCanvas`; every other game still falls back to the old generic placeholder (a CSS arena with
+a `setInterval` that adds a random score every 220ms — not real gameplay). New games should follow the
+asteroides pattern: a standalone engine module + a canvas/DOM component that reports snapshots to the
+shared player page, rather than extending the generic placeholder.
+
+### Auth and session
+
+`app/session-context.tsx` (`SessionProvider`/`useSession`) is an in-memory, client-only session (no
+persistence across reloads) used to greet the user and prefill the score-save name in the player page.
+`app/auth/page.tsx` is the login/register screen. Real auth is backed by Supabase (`lib/supabase/client.ts`,
+`createSupabaseClient()` reads `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, throws if
+missing) — see `specs/04-supabase-setup.md` for what's actually provisioned. Score persistence to Supabase
+is not wired up yet; scores shown are still `seededScores()`, a deterministic LCG-based generator.
+
+### Contact form
+
+`app/api/contact/route.ts` sends email via Resend (`RESEND_API_KEY`, `CONTACT_TO_EMAIL` in `.env`), used by
+the form on `app/acerca/page.tsx`.
+
+### Visual language
+
+Neon/CRT retro-arcade look: colors `cyan`/`magenta`/`green`/`yellow` (see `GameColor` in
+`app/data/games.ts`), fonts Press Start 2P (`font-pixel`) / Courier Prime / JetBrains Mono, CRT scanline
+effect applied via `.crt` / `.crt-screen` classes (see `app/jugar/[id]/page.tsx` for usage) defined in
+`app/globals.css`.
