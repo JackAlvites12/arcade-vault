@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { notFound } from "next/navigation";
 import { GAMES } from "@/app/data/games";
 import { useSession } from "@/app/session-context";
 import { Button, ButtonLink } from "@/app/components/button";
+import {
+  AsteroidsCanvas,
+  type AsteroidsCanvasHandle,
+} from "@/app/games/asteroides/asteroids-canvas";
+import type { EngineSnapshot } from "@/app/games/asteroides/engine";
 
 function Stat({
   label,
@@ -31,30 +36,47 @@ export default function ReproductorPage() {
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
 
+  const isAsteroids = game.id === "asteroides";
+
   const { user } = useSession();
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [engineLevel, setEngineLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState(user ? user.name : "INVITADO");
   const [saved, setSaved] = useState(false);
 
-  const level = Math.floor(score / 2500) + 1;
+  const canvasRef = useRef<AsteroidsCanvasHandle>(null);
+
+  const level = isAsteroids ? engineLevel : Math.floor(score / 2500) + 1;
 
   useEffect(() => {
-    if (over || paused) return;
+    if (isAsteroids || over || paused) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [over, paused]);
+  }, [isAsteroids, over, paused]);
 
-  const endGame = () => setOver(true);
+  const handleSnapshot = (snapshot: EngineSnapshot) => {
+    setScore(snapshot.score);
+    setLives(snapshot.lives);
+    setEngineLevel(snapshot.level);
+    if (snapshot.state === "gameover") setOver(true);
+  };
+
+  const endGame = () => {
+    if (isAsteroids) canvasRef.current?.forceGameOver();
+    setOver(true);
+  };
   const restart = () => {
+    if (isAsteroids) canvasRef.current?.restart();
     setScore(0);
     setLives(3);
+    setEngineLevel(1);
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -96,13 +118,21 @@ export default function ReproductorPage() {
 
       <div className="crt">
         <div className="crt-screen">
-          <div className="game-arena">
-            <div className="grid-floor" />
-            <div className="enemy e1" />
-            <div className="enemy e2" />
-            <div className="enemy e3" />
-            <div className="player-ship" />
-          </div>
+          {isAsteroids ? (
+            <AsteroidsCanvas
+              ref={canvasRef}
+              paused={paused}
+              onSnapshot={handleSnapshot}
+            />
+          ) : (
+            <div className="game-arena">
+              <div className="grid-floor" />
+              <div className="enemy e1" />
+              <div className="enemy e2" />
+              <div className="enemy e3" />
+              <div className="player-ship" />
+            </div>
+          )}
           {paused && (
             <div className="absolute inset-0 z-5 flex items-center justify-center bg-black/60 text-center">
               <div>
