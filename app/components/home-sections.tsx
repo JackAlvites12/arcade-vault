@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import { GAMES, seededScores } from "@/app/data/games";
+import { seededScores, type Game } from "@/app/data/games";
 import { CoverArt } from "@/app/components/cover-art";
 import { ButtonLink } from "@/app/components/button";
 import { RANK_COLOR } from "@/app/lib/rank-color";
@@ -402,8 +402,8 @@ export function WhyVaultSection() {
 
 /* ===== GAMES PREVIEW ===== */
 
-export function GamesPreviewSection() {
-  const preview = GAMES.slice(0, 6);
+export function GamesPreviewSection({ games }: { games: Game[] }) {
+  const preview = games.slice(0, 6);
   return (
     <section className="home-reveal mx-auto max-w-330 px-4 py-16 sm:px-8">
       <SectionHeading
@@ -443,9 +443,9 @@ export function GamesPreviewSection() {
 
 /* ===== STATS ===== */
 
-export function StatsSection() {
+export function StatsSection({ games }: { games: Game[] }) {
   const stats = [
-    { n: `${GAMES.length}`, u: "JUEGOS", s: "Y CONTANDO" },
+    { n: `${games.length}`, u: "JUEGOS", s: "Y CONTANDO" },
     { n: "MILES", u: "DE PARTIDAS", s: "JUGADAS CADA DÍA" },
     { n: "GLOBAL", u: "RANKING", s: "COMPITE CON EL MUNDO" },
   ];
@@ -484,14 +484,14 @@ const TICKER_COLORS: Array<keyof typeof GLOW> = [
   "cyan",
 ];
 
-export function LiveActivitySection() {
-  const recent = GAMES.slice(0, 7).map((g, i) => ({
+export function LiveActivitySection({ games }: { games: Game[] }) {
+  const recent = games.slice(0, 7).map((g, i) => ({
     game: g,
     row: seededScores(g.id.length * 23 + 7, 1)[0],
     minutesAgo: MINUTES_AGO[i],
     color: TICKER_COLORS[i % TICKER_COLORS.length],
   }));
-  const top = seededScores(GAMES.length * 23 + 7, 5);
+  const top = seededScores(games.length * 23 + 7, 5);
 
   return (
     <section className="home-reveal mx-auto max-w-330 px-4 py-16 sm:px-8">

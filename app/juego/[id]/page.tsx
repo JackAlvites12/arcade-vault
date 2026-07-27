@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { GAMES, seededScores } from "@/app/data/games";
+import { seededScores } from "@/app/data/games";
+import { getGame, getTopScores } from "@/app/data/db";
 import { CoverArt } from "@/app/components/cover-art";
 import { ButtonLink } from "@/app/components/button";
 import { RANK_COLOR } from "@/app/lib/rank-color";
@@ -10,10 +11,13 @@ export default async function GameDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(id);
   if (!game) notFound();
 
-  const scores = seededScores(id.length * 17 + 3, 10);
+  const scores =
+    id === "asteroides"
+      ? await getTopScores("asteroides", 10)
+      : seededScores(id.length * 17 + 3, 10);
 
   return (
     <div className="fade-in mx-auto my-6 grid max-w-330 grid-cols-1 gap-8 px-4 sm:my-12 sm:px-8 lg:grid-cols-[1.4fr_1fr]">
@@ -88,29 +92,38 @@ export default async function GameDetailPage({
         <h3 className="border-b border-line px-4 py-3.5 font-pixel text-[11px] tracking-[0.14em] text-magenta [text-shadow:0_0_8px_rgba(255,0,110,0.5)]">
           MEJORES PUNTUACIONES
         </h3>
-        {scores.map((r, i) => (
-          <div
-            key={r.name}
-            className="grid grid-cols-[36px_1fr_110px] items-center gap-2.5 border-b border-line-2 px-4 py-2.5 font-mono text-[13px]"
-          >
-            <div
-              className={`font-pixel text-[11px] text-ink-faint ${RANK_COLOR[i] ?? ""}`}
-            >
-              #{String(r.rank).padStart(2, "0")}
+        {scores.length === 0 ? (
+          <div className="px-4 py-10 text-center text-ink-faint">
+            <div className="mb-2 font-pixel text-xs text-magenta">
+              SIN PUNTUACIONES AÚN
             </div>
-            <div className="text-ink">
-              {r.name}
-              <div className="text-[10px] tracking-widest text-ink-faint">
-                {r.date}
+            <div className="text-sm">SÉ EL PRIMERO</div>
+          </div>
+        ) : (
+          scores.map((r, i) => (
+            <div
+              key={r.name}
+              className="grid grid-cols-[36px_1fr_110px] items-center gap-2.5 border-b border-line-2 px-4 py-2.5 font-mono text-[13px]"
+            >
+              <div
+                className={`font-pixel text-[11px] text-ink-faint ${RANK_COLOR[i] ?? ""}`}
+              >
+                #{String(r.rank).padStart(2, "0")}
+              </div>
+              <div className="text-ink">
+                {r.name}
+                <div className="text-[10px] tracking-widest text-ink-faint">
+                  {r.date}
+                </div>
+              </div>
+              <div
+                className={`text-right font-pixel text-xs text-cyan ${RANK_COLOR[i] ?? ""}`}
+              >
+                {r.score.toLocaleString("es-ES")}
               </div>
             </div>
-            <div
-              className={`text-right font-pixel text-xs text-cyan ${RANK_COLOR[i] ?? ""}`}
-            >
-              {r.score.toLocaleString("es-ES")}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </aside>
     </div>
   );
