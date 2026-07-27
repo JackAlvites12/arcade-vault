@@ -4,6 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## About the project
+
+Arcade Vault is a retro arcade web platform: a catalog of browser-playable minigames where users compete
+for the highest score on leaderboards. It combines a browsable catalog (`/biblioteca`), per-game detail
+pages with a leaderboard, and a generic player (`/jugar/[id]`) that mounts each game's specific engine.
+So far only Asteroids has a real game engine; every other game still uses a generic placeholder.
+Login/registration and user persistence are backed by Supabase, though the scores shown are still
+deterministic mock data.
+
 ## Idioma
 
 Always answer in Spanish, in all sessions.
