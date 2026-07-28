@@ -15,6 +15,11 @@ import {
   type TetrisCanvasHandle,
 } from "@/app/games/tetris/tetris-canvas";
 import type { EngineSnapshot as TetrisSnapshot } from "@/app/games/tetris/engine";
+import {
+  ArkanoidCanvas,
+  type ArkanoidCanvasHandle,
+} from "@/app/games/arkanoid/arkanoid-canvas";
+import type { EngineSnapshot as ArkanoidSnapshot } from "@/app/games/arkanoid/engine";
 
 function Stat({
   label,
@@ -38,7 +43,8 @@ function Stat({
 export function JugarClient({ game }: { game: Game }) {
   const isAsteroids = game.id === "asteroides";
   const isTetris = game.id === "tetris";
-  const isRealGame = isAsteroids || isTetris;
+  const isArkanoid = game.id === "arkanoid";
+  const isRealGame = isAsteroids || isTetris || isArkanoid;
 
   const { user } = useSession();
 
@@ -54,6 +60,7 @@ export function JugarClient({ game }: { game: Game }) {
 
   const asteroidsCanvasRef = useRef<AsteroidsCanvasHandle>(null);
   const tetrisCanvasRef = useRef<TetrisCanvasHandle>(null);
+  const arkanoidCanvasRef = useRef<ArkanoidCanvasHandle>(null);
 
   const level = isRealGame ? engineLevel : Math.floor(score / 2500) + 1;
 
@@ -80,14 +87,24 @@ export function JugarClient({ game }: { game: Game }) {
     if (snapshot.state === "gameover") setOver(true);
   };
 
+  const handleArkanoidSnapshot = (snapshot: ArkanoidSnapshot) => {
+    setScore(snapshot.score);
+    setLives(snapshot.lives);
+    setEngineLevel(snapshot.level);
+    if (snapshot.state === "gameover" || snapshot.state === "win")
+      setOver(true);
+  };
+
   const endGame = () => {
     if (isAsteroids) asteroidsCanvasRef.current?.forceGameOver();
     if (isTetris) tetrisCanvasRef.current?.forceGameOver();
+    if (isArkanoid) arkanoidCanvasRef.current?.forceGameOver();
     setOver(true);
   };
   const restart = () => {
     if (isAsteroids) asteroidsCanvasRef.current?.restart();
     if (isTetris) tetrisCanvasRef.current?.restart();
+    if (isArkanoid) arkanoidCanvasRef.current?.restart();
     setScore(0);
     setLives(3);
     setLines(0);
@@ -161,6 +178,12 @@ export function JugarClient({ game }: { game: Game }) {
               ref={tetrisCanvasRef}
               paused={paused}
               onSnapshot={handleTetrisSnapshot}
+            />
+          ) : isArkanoid ? (
+            <ArkanoidCanvas
+              ref={arkanoidCanvasRef}
+              paused={paused}
+              onSnapshot={handleArkanoidSnapshot}
             />
           ) : (
             <div className="game-arena">

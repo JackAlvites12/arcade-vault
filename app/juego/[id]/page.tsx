@@ -14,7 +14,8 @@ export default async function GameDetailPage({
   const game = await getGame(id);
   if (!game) notFound();
 
-  const isRealGame = id === "asteroides" || id === "tetris";
+  const isRealGame =
+    id === "asteroides" || id === "tetris" || id === "arkanoid";
   const scores = isRealGame
     ? await getTopScores(id, 10)
     : seededScores(id.length * 17 + 3, 10);
