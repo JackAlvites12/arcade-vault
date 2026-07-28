@@ -15,7 +15,10 @@ export default async function GameDetailPage({
   if (!game) notFound();
 
   const isRealGame =
-    id === "asteroides" || id === "tetris" || id === "arkanoid";
+    id === "asteroides" ||
+    id === "tetris" ||
+    id === "arkanoid" ||
+    id === "culebra";
   const scores = isRealGame
     ? await getTopScores(id, 10)
     : seededScores(id.length * 17 + 3, 10);
