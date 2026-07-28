@@ -20,6 +20,11 @@ import {
   type ArkanoidCanvasHandle,
 } from "@/app/games/arkanoid/arkanoid-canvas";
 import type { EngineSnapshot as ArkanoidSnapshot } from "@/app/games/arkanoid/engine";
+import {
+  CulebraCanvas,
+  type CulebraCanvasHandle,
+} from "@/app/games/culebra/culebra-canvas";
+import type { EngineSnapshot as CulebraSnapshot } from "@/app/games/culebra/engine";
 
 function Stat({
   label,
@@ -44,7 +49,8 @@ export function JugarClient({ game }: { game: Game }) {
   const isAsteroids = game.id === "asteroides";
   const isTetris = game.id === "tetris";
   const isArkanoid = game.id === "arkanoid";
-  const isRealGame = isAsteroids || isTetris || isArkanoid;
+  const isCulebra = game.id === "culebra";
+  const isRealGame = isAsteroids || isTetris || isArkanoid || isCulebra;
 
   const { user } = useSession();
 
@@ -61,6 +67,7 @@ export function JugarClient({ game }: { game: Game }) {
   const asteroidsCanvasRef = useRef<AsteroidsCanvasHandle>(null);
   const tetrisCanvasRef = useRef<TetrisCanvasHandle>(null);
   const arkanoidCanvasRef = useRef<ArkanoidCanvasHandle>(null);
+  const culebraCanvasRef = useRef<CulebraCanvasHandle>(null);
 
   const level = isRealGame ? engineLevel : Math.floor(score / 2500) + 1;
 
@@ -95,16 +102,25 @@ export function JugarClient({ game }: { game: Game }) {
       setOver(true);
   };
 
+  const handleCulebraSnapshot = (snapshot: CulebraSnapshot) => {
+    setScore(snapshot.score);
+    setLives(snapshot.lives);
+    setEngineLevel(snapshot.level);
+    if (snapshot.state === "gameover") setOver(true);
+  };
+
   const endGame = () => {
     if (isAsteroids) asteroidsCanvasRef.current?.forceGameOver();
     if (isTetris) tetrisCanvasRef.current?.forceGameOver();
     if (isArkanoid) arkanoidCanvasRef.current?.forceGameOver();
+    if (isCulebra) culebraCanvasRef.current?.forceGameOver();
     setOver(true);
   };
   const restart = () => {
     if (isAsteroids) asteroidsCanvasRef.current?.restart();
     if (isTetris) tetrisCanvasRef.current?.restart();
     if (isArkanoid) arkanoidCanvasRef.current?.restart();
+    if (isCulebra) culebraCanvasRef.current?.restart();
     setScore(0);
     setLives(3);
     setLines(0);
@@ -184,6 +200,12 @@ export function JugarClient({ game }: { game: Game }) {
               ref={arkanoidCanvasRef}
               paused={paused}
               onSnapshot={handleArkanoidSnapshot}
+            />
+          ) : isCulebra ? (
+            <CulebraCanvas
+              ref={culebraCanvasRef}
+              paused={paused}
+              onSnapshot={handleCulebraSnapshot}
             />
           ) : (
             <div className="game-arena">
