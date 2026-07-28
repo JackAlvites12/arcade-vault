@@ -14,10 +14,10 @@ export default async function GameDetailPage({
   const game = await getGame(id);
   if (!game) notFound();
 
-  const scores =
-    id === "asteroides"
-      ? await getTopScores("asteroides", 10)
-      : seededScores(id.length * 17 + 3, 10);
+  const isRealGame = id === "asteroides" || id === "tetris";
+  const scores = isRealGame
+    ? await getTopScores(id, 10)
+    : seededScores(id.length * 17 + 3, 10);
 
   return (
     <div className="fade-in mx-auto my-6 grid max-w-330 grid-cols-1 gap-8 px-4 sm:my-12 sm:px-8 lg:grid-cols-[1.4fr_1fr]">

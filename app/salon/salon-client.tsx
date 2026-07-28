@@ -59,22 +59,31 @@ function PodiumSlot({
   );
 }
 
+const REAL_GAME_IDS = new Set(["asteroides", "tetris"]);
+
 export function SalonClient({
   games,
   asteroidsScores,
+  tetrisScores,
 }: {
   games: Game[];
   asteroidsScores: ScoreRow[];
+  tetrisScores: ScoreRow[];
 }) {
   const [tab, setTab] = useState(games[0].id);
   const { user } = useSession();
 
   const seeded = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
-  const rows = tab === "asteroides" ? asteroidsScores : seeded;
+  const rows =
+    tab === "asteroides"
+      ? asteroidsScores
+      : tab === "tetris"
+        ? tetrisScores
+        : seeded;
   const game = games.find((g) => g.id === tab)!;
   const youRank = user ? 8 + (tab.length % 4) : null;
   const youScore = user ? rows[5]?.score - 2400 : null;
-  const isEmpty = tab === "asteroides" && rows.length === 0;
+  const isEmpty = REAL_GAME_IDS.has(tab) && rows.length === 0;
 
   return (
     <div className="fade-in mx-auto mb-20 mt-8 max-w-300 px-4 sm:px-8">
