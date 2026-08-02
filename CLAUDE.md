@@ -42,6 +42,43 @@ one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` re
 `references/started-games/` holds the source prototypes to port: `02-asteroids` (done), `03-tetris` (done),
 `04-arkanoid` (done).
 
+## Subagents
+
+`.claude/agents/` holds project subagents:
+
+- `game-planner` — sits **upstream** of `/add-game`: decides *which* game is worth adding. Reads the live
+  `games` table via Supabase MCP, the engines in `app/games/`, the types in `app/data/games.ts` and the
+  `.cover-*` classes, then returns 3 ranked candidates with a catalog card ready for `/add-game`. Scores
+  every idea against four criteria (catalog gap, implementation cost, no overlap with real engines or
+  placeholders, neon/CRT visual fit). Never writes code or specs. Its memory of past suggestions lives in
+  `references/game-suggestions.md` (append-only table, verdicts `propuesto`/`descartado`/`implementado`) —
+  the agent reads it on start and updates it before finishing, so a discarded idea is not re-proposed
+  without justification.
+- `game-jam` — takes a free-form **theme** ("juego sobre café") and returns 3 *different* games, each
+  with a **complete spec already written** to `specs/game-jam/<tema>-<id>.md`, scored against the same
+  four criteria as `game-planner`. Fixes the 3 angles (each with a distinct game verb) before writing
+  any file, so the sequential drafting doesn't collapse into variations of the first one. Spec shape is
+  copied from `specs/08-implement-tetris-game.md` / `09-implement-arkanoid-game.md`. Proposes a favourite
+  but **never picks the winner** — the user does. A second invocation (`@game-jam promover
+  specs/game-jam/<file>.md`) promotes the winner to `specs/game-jam/NN-implement-<id>-game.md` (global
+  `NN` sequence, shared with `specs/` root) and then deletes all three jam drafts — the promoted spec is
+  a full copy of the winner, and the record of the losers lives in the shared memory. Everything this agent
+  writes stays inside `specs/game-jam/`; since `/spec-impl` only lists `specs/` at root level, a
+  promoted spec is implemented by passing the full path. Shares the `references/game-suggestions.md`
+  memory with `game-planner`. Never writes code.
+- `skin-designer` — the only subagent that **does write code**, and only the visual layer. Audits that
+  every game with a real engine has the three skins — `clasico` (default), `neon`, `retro` — and
+  implements the missing ones. Source of truth is `app/games/<id>/skins.ts` (`SkinName`, `Skin`,
+  `SKINS`, `DEFAULT_SKIN`); a skin covers engine palette + cover art + CRT frame. `clasico` must
+  reproduce today's hex values exactly, so the default look never regresses. The engine holds the skin
+  as a public mutable field (switching skins doesn't restart the run), `<id>-canvas.tsx` takes an
+  optional `skin` prop, `.skin-neon`/`.skin-retro` modifiers in `globals.css` handle covers (via
+  `filter`, no new `.cover-*` classes) and the `--crt-glow` var, and `jugar-client.tsx` renders the
+  3-chip selector. Arkanoid is the special case: it draws PNG sprites, so its `Skin` adds a
+  `spriteFilter` applied as `ctx.filter` in the existing offscreen pass of `spritesheet.ts` — never
+  alternative spritesheets. Never touches gameplay, scoring or `saveScore`; placeholder games (no
+  `engine.ts`) are out of scope. No memory file: the audit derives from the filesystem.
+
 ## Skills
 
 Always use /frontend-design to design the user interface.
