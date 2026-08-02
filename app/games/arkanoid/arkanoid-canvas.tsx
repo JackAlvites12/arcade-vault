@@ -56,7 +56,7 @@ export const ArkanoidCanvas = forwardRef<
     const bounceSound = new Audio("/games/arkanoid/sounds/ball-bounce.mp3");
     const breakSound = new Audio("/games/arkanoid/sounds/break-sound.mp3");
     const playSound = (audio: HTMLAudioElement) =>
-      (audio.cloneNode() as HTMLAudioElement).play();
+      (audio.cloneNode() as HTMLAudioElement).play().catch(() => {});
 
     const keys: Record<string, boolean> = {};
 
