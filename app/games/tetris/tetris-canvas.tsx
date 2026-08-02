@@ -22,6 +22,10 @@ const HANDLED_KEYS = new Set([
   "Space",
 ]);
 
+const TAP_MAX_MS = 220;
+const TAP_MAX_DIST = 12;
+const SWIPE_MIN_DIST = 24;
+
 export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
   function TetrisCanvas({ paused, onSnapshot }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +70,65 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
       };
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
+
+      let touchId: number | null = null;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+      let gestureMoveLeft = false;
+      let gestureMoveRight = false;
+      let gestureRotate = false;
+      let gestureHardDrop = false;
+
+      const handleTouchStart = (e: TouchEvent) => {
+        e.preventDefault();
+        if (touchId !== null) return;
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        touchId = touch.identifier;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = performance.now();
+      };
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+      const handleTouchEnd = (e: TouchEvent) => {
+        e.preventDefault();
+        const touch = Array.from(e.changedTouches).find(
+          (t) => t.identifier === touchId,
+        );
+        if (!touch) return;
+        touchId = null;
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        const elapsed = performance.now() - touchStartTime;
+
+        if (elapsed < TAP_MAX_MS && Math.hypot(dx, dy) < TAP_MAX_DIST) {
+          gestureRotate = true;
+          return;
+        }
+        if (Math.abs(dy) > Math.abs(dx)) {
+          if (dy > SWIPE_MIN_DIST) gestureHardDrop = true;
+        } else {
+          if (dx < -SWIPE_MIN_DIST) gestureMoveLeft = true;
+          if (dx > SWIPE_MIN_DIST) gestureMoveRight = true;
+        }
+      };
+      const handleTouchCancel = (e: TouchEvent) => {
+        const touch = Array.from(e.changedTouches).find(
+          (t) => t.identifier === touchId,
+        );
+        if (touch) touchId = null;
+      };
+      canvas.addEventListener("touchstart", handleTouchStart, {
+        passive: false,
+      });
+      canvas.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+      });
+      canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
+      canvas.addEventListener("touchcancel", handleTouchCancel);
 
       const aspect = TetrisEngine.WIDTH / TetrisEngine.HEIGHT;
       const resize = () => {
@@ -114,17 +177,23 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
 
         if (!pausedRef.current) {
           const input: EngineInput = {
-            moveLeft: !!justPressed["ArrowLeft"],
-            moveRight: !!justPressed["ArrowRight"],
-            rotate: !!(justPressed["ArrowUp"] || justPressed["KeyX"]),
+            moveLeft: !!justPressed["ArrowLeft"] || gestureMoveLeft,
+            moveRight: !!justPressed["ArrowRight"] || gestureMoveRight,
+            rotate:
+              !!(justPressed["ArrowUp"] || justPressed["KeyX"]) ||
+              gestureRotate,
             softDrop: !!keys["ArrowDown"],
-            hardDrop: !!justPressed["Space"],
+            hardDrop: !!justPressed["Space"] || gestureHardDrop,
           };
           justPressed["ArrowLeft"] = false;
           justPressed["ArrowRight"] = false;
           justPressed["ArrowUp"] = false;
           justPressed["KeyX"] = false;
           justPressed["Space"] = false;
+          gestureMoveLeft = false;
+          gestureMoveRight = false;
+          gestureRotate = false;
+          gestureHardDrop = false;
           engine.update(dt, input);
           onSnapshotRef.current(engine.getSnapshot());
         }
@@ -138,6 +207,10 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
         cancelAnimationFrame(rafId);
         window.removeEventListener("keydown", handleKeyDown);
         window.removeEventListener("keyup", handleKeyUp);
+        canvas.removeEventListener("touchstart", handleTouchStart);
+        canvas.removeEventListener("touchmove", handleTouchMove);
+        canvas.removeEventListener("touchend", handleTouchEnd);
+        canvas.removeEventListener("touchcancel", handleTouchCancel);
         resizeObserver.disconnect();
       };
     }, []);
@@ -147,7 +220,7 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
         ref={containerRef}
         className="absolute inset-0 flex items-center justify-center"
       >
-        <canvas ref={canvasRef} className="block" />
+        <canvas ref={canvasRef} className="block touch-none" />
         <div className="absolute top-3 right-3 border border-line bg-bg/80 p-1">
           <canvas ref={nextCanvasRef} className="block" />
         </div>
