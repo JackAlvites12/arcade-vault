@@ -1,4 +1,4 @@
-# SPEC 11 — Juego TANQUES
+# SPEC — Juego TANQUES
 
 > **Estado:** Aprobado
 > **Depende de:** 06-asteroides (patrón motor+canvas), 07-leaderboard-y-tabla-juegos (Supabase)

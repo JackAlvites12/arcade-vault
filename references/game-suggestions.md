@@ -5,7 +5,7 @@ Veredictos: `propuesto` | `descartado` | `implementado`.
 
 | Fecha | Juego | id | Cat | Veredicto | Motivo |
 |---|---|---|---|---|---|
-| 2026-08-01 | TANQUES | tanques | VERSUS | propuesto | Ganador de la game jam "tanques", promovido a `specs/game-jam/11-implement-tanques-game.md`. Duelo 1v1 vs CPU en laberinto, balas con rebote que también te matan, mapa determinista por ronda |
+| 2026-08-01 | TANQUES | tanques | VERSUS | propuesto | Ganador de la game jam "tanques", promovido a `specs/game-jam/implement-tanques-game.md`. Duelo 1v1 vs CPU en laberinto, balas con rebote que también te matan, mapa determinista por ronda |
 | 2026-08-01 | DESLIZA | desliza | PUZZLE | propuesto | Candidato #2: PUZZLE solo tiene 1 motor real y su placeholder (caida) ya reserva el pozo de piezas; rejilla 4x4 de fusión, marcador natural |
 | 2026-08-01 | MISILES | misiles | SHOOTER | propuesto | Candidato #3: shooter defensivo con ratón, distinto de invasores (oleadas) y rocas/asteroides; estética vectorial CRT ideal |
 | 2026-08-01 | REBOTE (Pong) | rebote | VERSUS | descartado | `duelo-pixel` + `.cover-duelo` (dos palas, línea central, bola) ya reservan el hueco de Pong |
