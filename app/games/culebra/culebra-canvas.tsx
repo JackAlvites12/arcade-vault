@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { CulebraEngine, type EngineInput, type EngineSnapshot } from "./engine";
+import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
 
 export interface CulebraCanvasHandle {
   restart(): void;
@@ -11,6 +12,7 @@ export interface CulebraCanvasHandle {
 export interface CulebraCanvasProps {
   paused: boolean;
   onSnapshot: (snapshot: EngineSnapshot) => void;
+  skin?: SkinName;
 }
 
 const KEY_DIRECTIONS: Record<
@@ -30,7 +32,7 @@ const KEY_DIRECTIONS: Record<
 export const CulebraCanvas = forwardRef<
   CulebraCanvasHandle,
   CulebraCanvasProps
->(function CulebraCanvas({ paused, onSnapshot }, ref) {
+>(function CulebraCanvas({ paused, onSnapshot, skin = DEFAULT_SKIN }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<CulebraEngine | null>(null);
@@ -40,6 +42,10 @@ export const CulebraCanvas = forwardRef<
   pausedRef.current = paused;
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+
+  useEffect(() => {
+    if (engineRef.current) engineRef.current.skin = SKINS[skin];
+  }, [skin]);
 
   useImperativeHandle(ref, () => ({
     restart: () => engineRef.current?.restart(),

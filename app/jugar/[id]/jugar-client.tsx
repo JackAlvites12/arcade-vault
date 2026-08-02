@@ -203,6 +203,7 @@ export function JugarClient({ game }: { game: Game }) {
             <AsteroidsCanvas
               ref={asteroidsCanvasRef}
               paused={paused}
+              skin={skin}
               onSnapshot={handleAsteroidsSnapshot}
             />
           ) : isTetris ? (
@@ -222,6 +223,7 @@ export function JugarClient({ game }: { game: Game }) {
             <CulebraCanvas
               ref={culebraCanvasRef}
               paused={paused}
+              skin={skin}
               onSnapshot={handleCulebraSnapshot}
             />
           ) : (
