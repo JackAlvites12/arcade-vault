@@ -1,5 +1,7 @@
 // Motor de Culebra (Snake clásico) — grid fijo, movimiento discreto por celda.
 
+import { SKINS, type Skin } from "./skins";
+
 export type EngineState = "playing" | "gameover";
 
 export interface EngineSnapshot {
@@ -47,6 +49,9 @@ export class CulebraEngine {
   private score = 0;
   private state: EngineState = "playing";
   private tickAccum = 0;
+
+  /** Capa visual. Mutable en caliente: cambiar de skin no reinicia la partida. */
+  skin: Skin = SKINS.clasico;
 
   constructor() {
     this.restart();
@@ -143,10 +148,10 @@ export class CulebraEngine {
 
   draw(ctx: CanvasRenderingContext2D, fruitImage: HTMLImageElement | null) {
     const { CELL, WIDTH, HEIGHT, COLS, ROWS } = CulebraEngine;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = this.skin.bg;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.strokeStyle = this.skin.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -162,11 +167,12 @@ export class CulebraEngine {
     }
 
     // Borde bien marcado del límite jugable, en contraste con la grilla interna tenue.
-    ctx.strokeStyle = "#00ff88";
+    ctx.strokeStyle = this.skin.border;
     ctx.lineWidth = 3;
     ctx.strokeRect(1.5, 1.5, WIDTH - 3, HEIGHT - 3);
 
     if (fruitImage && fruitImage.complete && fruitImage.naturalWidth > 0) {
+      ctx.filter = this.skin.fruitFilter;
       ctx.drawImage(
         fruitImage,
         FRUIT_SPRITE.x,
@@ -178,10 +184,11 @@ export class CulebraEngine {
         CELL - 4,
         CELL - 4,
       );
+      ctx.filter = "none";
     }
 
     this.snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? "#00ff88" : "#0a8f52";
+      ctx.fillStyle = i === 0 ? this.skin.head : this.skin.body;
       ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
     });
   }
