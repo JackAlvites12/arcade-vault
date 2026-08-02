@@ -6,6 +6,7 @@ import {
   type EngineInput,
   type EngineSnapshot,
 } from "./engine";
+import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
 
 export interface AsteroidsCanvasHandle {
   restart(): void;
@@ -15,6 +16,8 @@ export interface AsteroidsCanvasHandle {
 export interface AsteroidsCanvasProps {
   paused: boolean;
   onSnapshot: (snapshot: EngineSnapshot) => void;
+  /** Capa visual; cambiarla no reinicia la partida. */
+  skin?: SkinName;
 }
 
 const HANDLED_KEYS = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "Space"]);
@@ -22,7 +25,7 @@ const HANDLED_KEYS = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "Space"]);
 export const AsteroidsCanvas = forwardRef<
   AsteroidsCanvasHandle,
   AsteroidsCanvasProps
->(function AsteroidsCanvas({ paused, onSnapshot }, ref) {
+>(function AsteroidsCanvas({ paused, onSnapshot, skin = DEFAULT_SKIN }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<AsteroidsEngine | null>(null);
@@ -32,6 +35,10 @@ export const AsteroidsCanvas = forwardRef<
   pausedRef.current = paused;
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+
+  useEffect(() => {
+    if (engineRef.current) engineRef.current.skin = SKINS[skin];
+  }, [skin]);
 
   useImperativeHandle(ref, () => ({
     restart: () => engineRef.current?.restart(),
