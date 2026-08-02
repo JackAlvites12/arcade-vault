@@ -15,10 +15,9 @@ export interface CulebraCanvasProps {
   skin?: SkinName;
 }
 
-const KEY_DIRECTIONS: Record<
-  string,
-  "up" | "down" | "left" | "right" | undefined
-> = {
+type Direction = "up" | "down" | "left" | "right";
+
+const KEY_DIRECTIONS: Record<string, Direction | undefined> = {
   ArrowUp: "up",
   KeyW: "up",
   ArrowDown: "down",
@@ -28,6 +27,13 @@ const KEY_DIRECTIONS: Record<
   ArrowRight: "right",
   KeyD: "right",
 };
+
+const DPAD_BUTTONS: Array<{ dir: Direction; label: string }> = [
+  { dir: "up", label: "▲" },
+  { dir: "left", label: "◀" },
+  { dir: "right", label: "▶" },
+  { dir: "down", label: "▼" },
+];
 
 export const CulebraCanvas = forwardRef<
   CulebraCanvasHandle,
@@ -42,6 +48,24 @@ export const CulebraCanvas = forwardRef<
   pausedRef.current = paused;
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+  const requestedDirectionRef = useRef<Direction | null>(null);
+  const dpadTouchIds = useRef<Partial<Record<Direction, number>>>({});
+
+  const handleDpadTouchStart = (dir: Direction, e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    dpadTouchIds.current[dir] = touch.identifier;
+    requestedDirectionRef.current = dir;
+  };
+
+  const handleDpadTouchEnd = (dir: Direction, e: React.TouchEvent) => {
+    e.preventDefault();
+    const released = Array.from(e.changedTouches).some(
+      (t) => t.identifier === dpadTouchIds.current[dir],
+    );
+    if (released) dpadTouchIds.current[dir] = undefined;
+  };
 
   useEffect(() => {
     if (engineRef.current) engineRef.current.skin = SKINS[skin];
@@ -63,14 +87,12 @@ export const CulebraCanvas = forwardRef<
     const fruitImage = new Image();
     fruitImage.src = "/snake-assets/fruits.png";
 
-    let requestedDirection: "up" | "down" | "left" | "right" | null = null;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       const direction = KEY_DIRECTIONS[e.code];
       if (!direction) return;
       if (engine.getSnapshot().state === "gameover") return;
       e.preventDefault();
-      requestedDirection = direction;
+      requestedDirectionRef.current = direction;
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -112,7 +134,9 @@ export const CulebraCanvas = forwardRef<
       lastTime = ts;
 
       if (!pausedRef.current) {
-        const input: EngineInput = { direction: requestedDirection };
+        const input: EngineInput = {
+          direction: requestedDirectionRef.current,
+        };
         engine.update(dt, input);
         onSnapshotRef.current(engine.getSnapshot());
       }
@@ -134,6 +158,21 @@ export const CulebraCanvas = forwardRef<
       className="absolute inset-0 flex items-center justify-center"
     >
       <canvas ref={canvasRef} className="block" />
+      <div className="touch-dpad">
+        {DPAD_BUTTONS.map(({ dir, label }) => (
+          <button
+            key={dir}
+            type="button"
+            aria-label={dir}
+            className={`touch-dpad-btn touch-dpad-btn-${dir}`}
+            onTouchStart={(e) => handleDpadTouchStart(dir, e)}
+            onTouchEnd={(e) => handleDpadTouchEnd(dir, e)}
+            onTouchCancel={(e) => handleDpadTouchEnd(dir, e)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 });

@@ -80,6 +80,21 @@ export const ArkanoidCanvas = forwardRef<
     };
     container.addEventListener("mousemove", handleMouseMove);
 
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+      const rect = container.getBoundingClientRect();
+      pointerX =
+        ((touch.clientX - rect.left) / rect.width) * ArkanoidEngine.WIDTH;
+    };
+    container.addEventListener("touchstart", handleTouchMove, {
+      passive: false,
+    });
+    container.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+
     let started = false;
     let rafId = 0;
 
@@ -140,12 +155,14 @@ export const ArkanoidCanvas = forwardRef<
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       container.removeEventListener("mousemove", handleMouseMove);
+      container.removeEventListener("touchstart", handleTouchMove);
+      container.removeEventListener("touchmove", handleTouchMove);
       resizeObserver.disconnect();
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0">
+    <div ref={containerRef} className="absolute inset-0 touch-none">
       <canvas ref={canvasRef} className="block" />
     </div>
   );
