@@ -15,6 +15,8 @@
   --gold: #ffcf3a;
   --silver: #c7d0e0;
   --bronze: #d97a3a;
+  /* Brillo del CRT como triplete RGB para poder variar el alfa por uso. */
+  --crt-glow: 0, 245, 255;
   --line: rgba(0, 245, 255, 0.18);
   --line-2: rgba(255, 255, 255, 0.06);
   --pixel: var(--font-pixel), system-ui, monospace;
@@ -184,13 +186,13 @@ a { color: inherit; text-decoration: none; }
   box-shadow:
     0 0 0 6px #1b1b22,
     0 0 0 7px #2a2a35,
-    0 30px 80px -20px rgba(0,245,255,0.35);
+    0 30px 80px -20px rgba(var(--crt-glow),0.35);
   overflow: hidden;
 }
 .crt::before {
   content: "";
   position: absolute; inset: 0;
-  background: radial-gradient(120% 80% at 50% 30%, rgba(0,245,255,0.05), transparent 60%);
+  background: radial-gradient(120% 80% at 50% 30%, rgba(var(--crt-glow),0.05), transparent 60%);
   pointer-events: none;
 }
 .crt-screen {
@@ -199,7 +201,7 @@ a { color: inherit; text-decoration: none; }
   background: #000;
   border-radius: 12px / 28px;
   overflow: hidden;
-  box-shadow: inset 0 0 60px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,245,255,0.15);
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.9), inset 0 0 20px rgba(var(--crt-glow),0.15);
 }
 .crt-screen::after {
   content: "";
@@ -213,6 +215,19 @@ a { color: inherit; text-decoration: none; }
   position: absolute; inset: 0;
   background: radial-gradient(120% 90% at 50% 50%, transparent 60%, rgba(0,0,0,0.65));
   pointer-events: none;
+}
+
+/* ===== skins: capa visual intercambiable (clasico | neon | retro) =====
+   `clasico` no define nada: es el aspecto por defecto, sin regresión. */
+.skin-neon { --crt-glow: 255, 0, 110; }
+.skin-retro { --crt-glow: 255, 176, 0; }
+
+/* La skin puede venir en un ancestro (.crt) o en la propia portada. */
+.skin-neon .cover-bg,
+.cover-bg.skin-neon { filter: saturate(2.4) contrast(1.25) brightness(1.2); }
+.skin-retro .cover-bg,
+.cover-bg.skin-retro {
+  filter: grayscale(1) sepia(1) hue-rotate(-14deg) saturate(1.6) brightness(1.05);
 }
 
 .game-arena {
