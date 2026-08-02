@@ -69,9 +69,37 @@ const BLOCK_SPRITES: Record<string, SpriteFrame> = {
   green: { sx: 32, sy: 208, sw: 32, sh: 16 },
 };
 
+let rawImg: HTMLImageElement | null = null;
 let ssImg: HTMLCanvasElement | null = null;
 let ssLoaded = false;
+let ssLoading = false;
+let activeFilter = "none";
 const ssCallbacks: Array<() => void> = [];
+/** Un canvas offscreen por filtro; la spritesheet es pequeña y hay 3 skins. */
+const sheets = new Map<string, HTMLCanvasElement>();
+
+function renderSheet(filter: string): HTMLCanvasElement | null {
+  if (!rawImg) return null;
+  const cached = sheets.get(filter);
+  if (cached) return cached;
+  const oc = document.createElement("canvas");
+  oc.width = rawImg.width;
+  oc.height = rawImg.height;
+  const octx = oc.getContext("2d");
+  if (!octx) return null;
+  octx.filter = filter;
+  octx.drawImage(rawImg, 0, 0);
+  sheets.set(filter, oc);
+  return oc;
+}
+
+/** Cambia el tinte de la spritesheet. No-op si ya es el activo. */
+export function setSpriteFilter(filter: string): void {
+  if (filter === activeFilter && ssImg) return;
+  activeFilter = filter;
+  const sheet = renderSheet(filter);
+  if (sheet) ssImg = sheet;
+}
 
 export function loadSpritesheet(cb: () => void): void {
   if (ssLoaded) {
@@ -79,22 +107,19 @@ export function loadSpritesheet(cb: () => void): void {
     return;
   }
   ssCallbacks.push(cb);
-  if (ssImg) return;
+  if (ssLoading) return;
+  ssLoading = true;
 
-  const rawImg = new Image();
-  rawImg.onload = () => {
-    const oc = document.createElement("canvas");
-    oc.width = rawImg.width;
-    oc.height = rawImg.height;
-    const octx = oc.getContext("2d");
-    octx?.drawImage(rawImg, 0, 0);
-    ssImg = oc;
+  const img = new Image();
+  img.onload = () => {
+    rawImg = img;
+    ssImg = renderSheet(activeFilter);
     ssLoaded = true;
     ssCallbacks.forEach((f) => f());
     ssCallbacks.length = 0;
   };
-  rawImg.onerror = () => console.error("Failed to load spritesheet");
-  rawImg.src = "/games/arkanoid/spritesheet-breakout.png";
+  img.onerror = () => console.error("Failed to load spritesheet");
+  img.src = "/games/arkanoid/spritesheet-breakout.png";
 }
 
 export function drawFrame(

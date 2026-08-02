@@ -3,9 +3,11 @@
 import {
   drawSprite,
   drawFrame,
+  setSpriteFilter,
   EXPLOSION_FRAMES,
   EXPLOSION_DURATION,
 } from "./spritesheet";
+import { SKINS, type Skin } from "./skins";
 
 export type EngineState = "playing" | "win" | "gameover";
 export type EngineEvent = "bounce" | "break";
@@ -143,6 +145,9 @@ export class ArkanoidEngine {
   static readonly WIDTH = W;
   static readonly HEIGHT = H;
   static readonly LEVEL_COUNT = LEVELS.length;
+
+  /** Capa visual. Mutable en caliente: cambiar de skin no reinicia la partida. */
+  skin: Skin = SKINS.clasico;
 
   private paddle: Paddle = { x: 0, y: 560, w: 81, h: 14 };
   private ball: Ball = { x: 0, y: 0, w: 16, h: 16, vx: 0, vy: 0 };
@@ -293,7 +298,8 @@ export class ArkanoidEngine {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#000";
+    setSpriteFilter(this.skin.spriteFilter);
+    ctx.fillStyle = this.skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     for (const block of this.blocks) {

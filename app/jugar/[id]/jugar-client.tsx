@@ -5,6 +5,7 @@ import type { Game } from "@/app/data/games";
 import { saveScore } from "@/app/data/db";
 import { useSession } from "@/app/session-context";
 import { Button, ButtonLink } from "@/app/components/button";
+import { DEFAULT_SKIN, SKIN_NAMES, type SkinName } from "@/app/lib/skins";
 import {
   AsteroidsCanvas,
   type AsteroidsCanvasHandle,
@@ -63,6 +64,7 @@ export function JugarClient({ game }: { game: Game }) {
   const [name, setName] = useState(user ? user.name : "INVITADO");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [skin, setSkin] = useState<SkinName>(DEFAULT_SKIN);
 
   const asteroidsCanvasRef = useRef<AsteroidsCanvasHandle>(null);
   const tetrisCanvasRef = useRef<TetrisCanvasHandle>(null);
@@ -168,7 +170,21 @@ export function JugarClient({ game }: { game: Game }) {
             valueClass="text-yellow [text-shadow:0_0_6px_rgba(245,255,0,0.5)]"
           />
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label className="flex items-center gap-2 font-pixel text-[9px] tracking-[0.12em] text-ink-dim">
+            SKIN
+            <select
+              value={skin}
+              onChange={(e) => setSkin(e.target.value as SkinName)}
+              className="border border-line bg-bg-2 px-3 py-3 font-pixel text-[9px] tracking-[0.12em] text-ink cursor-pointer"
+            >
+              {SKIN_NAMES.map((s) => (
+                <option key={s} value={s}>
+                  {s.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
           <Button variant="yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </Button>
@@ -181,7 +197,7 @@ export function JugarClient({ game }: { game: Game }) {
         </div>
       </div>
 
-      <div className="crt">
+      <div className={`crt skin-${skin}`}>
         <div className="crt-screen">
           {isAsteroids ? (
             <AsteroidsCanvas
@@ -199,6 +215,7 @@ export function JugarClient({ game }: { game: Game }) {
             <ArkanoidCanvas
               ref={arkanoidCanvasRef}
               paused={paused}
+              skin={skin}
               onSnapshot={handleArkanoidSnapshot}
             />
           ) : isCulebra ? (
