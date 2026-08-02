@@ -398,6 +398,112 @@ a { color: inherit; text-decoration: none; }
   filter: drop-shadow(0 0 6px rgba(0,245,255,0.4));
 }
 
+/* ===== controles táctiles (mobile + touch) =====
+   Detección pura CSS: viewport angosto + puntero "coarse" (dedo, no mouse). */
+.touch-dpad {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  grid-template-areas:
+    ".    up    ."
+    "left .     right"
+    ".    down  .";
+  gap: 4px;
+  z-index: 10;
+}
+.touch-dpad-btn {
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: rgba(10, 10, 15, 0.55);
+  color: var(--green);
+  font-family: var(--pixel);
+  font-size: 14px;
+  text-shadow: 0 0 6px var(--green);
+}
+.touch-dpad-btn-up { grid-area: up; }
+.touch-dpad-btn-down { grid-area: down; }
+.touch-dpad-btn-left { grid-area: left; }
+.touch-dpad-btn-right { grid-area: right; }
+
+.touch-controls {
+  display: none;
+  position: absolute;
+  inset: auto 18px 16px 18px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+.touch-joystick-base {
+  touch-action: none;
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(10, 10, 15, 0.55);
+}
+.touch-joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: rgba(0, 245, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+  pointer-events: none;
+}
+.touch-shoot-btn {
+  touch-action: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--magenta);
+  background: rgba(10, 10, 15, 0.55);
+  color: var(--magenta);
+  font-size: 22px;
+  text-shadow: 0 0 8px var(--magenta);
+}
+
+@media (max-width: 820px) and (pointer: coarse) {
+  .touch-dpad {
+    display: grid;
+  }
+  .touch-controls {
+    display: flex;
+  }
+
+  .hud-bar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .hud-stats {
+    gap: 12px;
+  }
+  .hud-stat-label {
+    font-size: 8px;
+  }
+  .hud-stat-value {
+    font-size: 12px;
+  }
+  .hud-actions {
+    gap: 6px;
+  }
+  .hud-actions button,
+  .hud-actions a {
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+}
+
 /* ===== About + Contact page ===== */
 .about-hero {
   max-width: 1100px;

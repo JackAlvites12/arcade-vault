@@ -38,10 +38,12 @@ function Stat({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+      <div className="hud-stat-label font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
         {label}
       </div>
-      <div className={`font-pixel text-base ${valueClass}`}>{value}</div>
+      <div className={`hud-stat-value font-pixel text-base ${valueClass}`}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -143,8 +145,8 @@ export function JugarClient({ game }: { game: Game }) {
 
   return (
     <div className="fade-in mx-auto my-8 max-w-275 px-4 pb-8 sm:px-6 sm:pb-16">
-      <div className="mb-4.5 flex flex-wrap items-center justify-between gap-4 border border-line bg-bg-2 px-4.5 py-3.5">
-        <div className="flex flex-wrap gap-6">
+      <div className="hud-bar mb-4.5 flex flex-wrap items-center justify-between gap-4 border border-line bg-bg-2 px-4.5 py-3.5">
+        <div className="hud-stats flex flex-wrap gap-6">
           <Stat label="Jugador" value={name} valueClass="text-ink" />
           <Stat
             label="Puntuación"
@@ -170,7 +172,7 @@ export function JugarClient({ game }: { game: Game }) {
             valueClass="text-yellow [text-shadow:0_0_6px_rgba(245,255,0,0.5)]"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="hud-actions flex flex-wrap items-center gap-2.5">
           <label className="flex items-center gap-2 font-pixel text-[9px] tracking-[0.12em] text-ink-dim">
             SKIN
             <select
