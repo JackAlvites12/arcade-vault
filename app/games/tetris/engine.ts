@@ -1,5 +1,7 @@
 // Motor de Tetris — puerto TypeScript de references/started-games/03-tetris/game.js
 
+import { SKINS, type Skin } from "./skins";
+
 export type EngineState = "playing" | "gameover";
 
 export interface EngineSnapshot {
@@ -16,18 +18,6 @@ export interface EngineInput {
   softDrop: boolean; // held
   hardDrop: boolean; // edge-triggered
 }
-
-const COLORS: Array<string | null> = [
-  null,
-  "#4dd0e1", // I - cyan
-  "#ffd54f", // O - yellow
-  "#ba68c8", // T - purple
-  "#81c784", // S - green
-  "#e57373", // Z - red
-  "#90caf9", // J - pale blue
-  "#ffb74d", // L - orange
-  "#9e9e9e", // N - tuerca (gris metálico)
-];
 
 const PIECES: Array<number[][] | null> = [
   null,
@@ -111,6 +101,9 @@ export class TetrisEngine {
   private state: EngineState = "playing";
   private dropAccum = 0;
   private dropInterval = 1000;
+
+  /** Capa visual. Mutable en caliente: cambiar de skin no reinicia la partida. */
+  skin: Skin = SKINS.clasico;
 
   constructor() {
     this.restart();
@@ -292,15 +285,15 @@ export class TetrisEngine {
   ) {
     if (!colorIndex) return;
     ctx.globalAlpha = alpha ?? 1;
-    ctx.fillStyle = COLORS[colorIndex]!;
+    ctx.fillStyle = this.skin.pieces[colorIndex - 1];
     ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillStyle = this.skin.blockHighlight;
     ctx.fillRect(x * size + 1, y * size + 1, size - 2, 4);
     ctx.globalAlpha = 1;
   }
 
   private drawGrid(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = this.skin.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < TetrisEngine.COLS; c++) {
       ctx.beginPath();
@@ -317,7 +310,7 @@ export class TetrisEngine {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = this.skin.bg;
     ctx.fillRect(0, 0, TetrisEngine.WIDTH, TetrisEngine.HEIGHT);
     this.drawGrid(ctx);
 
