@@ -2,14 +2,21 @@ import { getGames, getTopScores } from "@/app/data/db";
 import { SalonClient } from "@/app/salon/salon-client";
 
 export default async function SalonPage() {
-  const [games, asteroidsScores, tetrisScores, arkanoidScores, culebraScores] =
-    await Promise.all([
-      getGames(),
-      getTopScores("asteroides", 10),
-      getTopScores("tetris", 10),
-      getTopScores("arkanoid", 10),
-      getTopScores("culebra", 10),
-    ]);
+  const [
+    games,
+    asteroidsScores,
+    tetrisScores,
+    arkanoidScores,
+    culebraScores,
+    froggerScores,
+  ] = await Promise.all([
+    getGames(),
+    getTopScores("asteroides", 10),
+    getTopScores("tetris", 10),
+    getTopScores("arkanoid", 10),
+    getTopScores("culebra", 10),
+    getTopScores("frogger", 10),
+  ]);
   return (
     <SalonClient
       games={games}
@@ -17,6 +24,7 @@ export default async function SalonPage() {
       tetrisScores={tetrisScores}
       arkanoidScores={arkanoidScores}
       culebraScores={culebraScores}
+      froggerScores={froggerScores}
     />
   );
 }

@@ -26,6 +26,11 @@ import {
   type CulebraCanvasHandle,
 } from "@/app/games/culebra/culebra-canvas";
 import type { EngineSnapshot as CulebraSnapshot } from "@/app/games/culebra/engine";
+import {
+  FroggerCanvas,
+  type FroggerCanvasHandle,
+} from "@/app/games/frogger/frogger-canvas";
+import type { EngineSnapshot as FroggerSnapshot } from "@/app/games/frogger/engine";
 
 function Stat({
   label,
@@ -53,7 +58,9 @@ export function JugarClient({ game }: { game: Game }) {
   const isTetris = game.id === "tetris";
   const isArkanoid = game.id === "arkanoid";
   const isCulebra = game.id === "culebra";
-  const isRealGame = isAsteroids || isTetris || isArkanoid || isCulebra;
+  const isFrogger = game.id === "frogger";
+  const isRealGame =
+    isAsteroids || isTetris || isArkanoid || isCulebra || isFrogger;
 
   const { user } = useSession();
 
@@ -72,6 +79,7 @@ export function JugarClient({ game }: { game: Game }) {
   const tetrisCanvasRef = useRef<TetrisCanvasHandle>(null);
   const arkanoidCanvasRef = useRef<ArkanoidCanvasHandle>(null);
   const culebraCanvasRef = useRef<CulebraCanvasHandle>(null);
+  const froggerCanvasRef = useRef<FroggerCanvasHandle>(null);
 
   const level = isRealGame ? engineLevel : Math.floor(score / 2500) + 1;
 
@@ -113,11 +121,19 @@ export function JugarClient({ game }: { game: Game }) {
     if (snapshot.state === "gameover") setOver(true);
   };
 
+  const handleFroggerSnapshot = (snapshot: FroggerSnapshot) => {
+    setScore(snapshot.score);
+    setLives(snapshot.lives);
+    setEngineLevel(snapshot.level);
+    if (snapshot.state === "gameover") setOver(true);
+  };
+
   const endGame = () => {
     if (isAsteroids) asteroidsCanvasRef.current?.forceGameOver();
     if (isTetris) tetrisCanvasRef.current?.forceGameOver();
     if (isArkanoid) arkanoidCanvasRef.current?.forceGameOver();
     if (isCulebra) culebraCanvasRef.current?.forceGameOver();
+    if (isFrogger) froggerCanvasRef.current?.forceGameOver();
     setOver(true);
   };
   const restart = () => {
@@ -125,6 +141,7 @@ export function JugarClient({ game }: { game: Game }) {
     if (isTetris) tetrisCanvasRef.current?.restart();
     if (isArkanoid) arkanoidCanvasRef.current?.restart();
     if (isCulebra) culebraCanvasRef.current?.restart();
+    if (isFrogger) froggerCanvasRef.current?.restart();
     setScore(0);
     setLives(3);
     setLines(0);
@@ -212,6 +229,7 @@ export function JugarClient({ game }: { game: Game }) {
             <TetrisCanvas
               ref={tetrisCanvasRef}
               paused={paused}
+              skin={skin}
               onSnapshot={handleTetrisSnapshot}
             />
           ) : isArkanoid ? (
@@ -227,6 +245,13 @@ export function JugarClient({ game }: { game: Game }) {
               paused={paused}
               skin={skin}
               onSnapshot={handleCulebraSnapshot}
+            />
+          ) : isFrogger ? (
+            <FroggerCanvas
+              ref={froggerCanvasRef}
+              paused={paused}
+              skin={skin}
+              onSnapshot={handleFroggerSnapshot}
             />
           ) : (
             <div className="game-arena">

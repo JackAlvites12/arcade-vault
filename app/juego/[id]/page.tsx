@@ -18,7 +18,8 @@ export default async function GameDetailPage({
     id === "asteroides" ||
     id === "tetris" ||
     id === "arkanoid" ||
-    id === "culebra";
+    id === "culebra" ||
+    id === "frogger";
   const scores = isRealGame
     ? await getTopScores(id, 10)
     : seededScores(id.length * 17 + 3, 10);
