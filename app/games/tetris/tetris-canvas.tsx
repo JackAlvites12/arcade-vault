@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { TetrisEngine, type EngineInput, type EngineSnapshot } from "./engine";
+import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
 
 export interface TetrisCanvasHandle {
   restart(): void;
@@ -11,6 +12,7 @@ export interface TetrisCanvasHandle {
 export interface TetrisCanvasProps {
   paused: boolean;
   onSnapshot: (snapshot: EngineSnapshot) => void;
+  skin?: SkinName;
 }
 
 const HANDLED_KEYS = new Set([
@@ -27,7 +29,7 @@ const TAP_MAX_DIST = 12;
 const SWIPE_MIN_DIST = 24;
 
 export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
-  function TetrisCanvas({ paused, onSnapshot }, ref) {
+  function TetrisCanvas({ paused, onSnapshot, skin = DEFAULT_SKIN }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const nextCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,6 +40,10 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
     pausedRef.current = paused;
     const onSnapshotRef = useRef(onSnapshot);
     onSnapshotRef.current = onSnapshot;
+
+    useEffect(() => {
+      if (engineRef.current) engineRef.current.skin = SKINS[skin];
+    }, [skin]);
 
     useImperativeHandle(ref, () => ({
       restart: () => engineRef.current?.restart(),

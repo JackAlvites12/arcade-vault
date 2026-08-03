@@ -59,7 +59,13 @@ function PodiumSlot({
   );
 }
 
-const REAL_GAME_IDS = new Set(["asteroides", "tetris", "arkanoid", "culebra"]);
+const REAL_GAME_IDS = new Set([
+  "asteroides",
+  "tetris",
+  "arkanoid",
+  "culebra",
+  "frogger",
+]);
 
 export function SalonClient({
   games,
@@ -67,12 +73,14 @@ export function SalonClient({
   tetrisScores,
   arkanoidScores,
   culebraScores,
+  froggerScores,
 }: {
   games: Game[];
   asteroidsScores: ScoreRow[];
   tetrisScores: ScoreRow[];
   arkanoidScores: ScoreRow[];
   culebraScores: ScoreRow[];
+  froggerScores: ScoreRow[];
 }) {
   const [tab, setTab] = useState(games[0].id);
   const { user } = useSession();
@@ -87,7 +95,9 @@ export function SalonClient({
           ? arkanoidScores
           : tab === "culebra"
             ? culebraScores
-            : seeded;
+            : tab === "frogger"
+              ? froggerScores
+              : seeded;
   const game = games.find((g) => g.id === tab)!;
   const youRank = user ? 8 + (tab.length % 4) : null;
   const youScore = user ? rows[5]?.score - 2400 : null;
