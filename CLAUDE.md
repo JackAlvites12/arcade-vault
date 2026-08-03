@@ -78,6 +78,18 @@ one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` re
   `spriteFilter` applied as `ctx.filter` in the existing offscreen pass of `spritesheet.ts` — never
   alternative spritesheets. Never touches gameplay, scoring or `saveScore`; placeholder games (no
   `engine.ts`) are out of scope. No memory file: the audit derives from the filesystem.
+- `mobile-porter` — audits and implements responsive/mobile layout for the **whole site** (not just
+  the 4 real-engine games): home, `/biblioteca`, `/salon`, `/juego/[id]`, `/jugar/[id]`, `/acerca`,
+  `/auth`. Complements `specs/11-controles-tactiles.md`, which already covers touch controls and the
+  compact HUD for the 4 real engines — this agent fills the gap that spec left out: layout,
+  typography, spacing, and nav in a mobile viewport, a concern every other spec only ever mentioned
+  as a loose checklist item. "Mobile" here means the same Next.js site viewed in a mobile browser —
+  there's no native app or PWA in this repo. Prefers Tailwind utilities already used in a file, then
+  pure CSS media queries reusing an existing breakpoint (`max-width: 820px`, `900px`) over inventing
+  new ones. Never edits the touch-control classes or compact-HUD block spec 11 already shipped
+  (`.touch-dpad`, `.touch-controls`, `.touch-joystick-*`, `.touch-shoot-btn`) — only adds around them.
+  Never touches `engine.ts`, `EngineInput`, scoring, or `saveScore`. No memory file: the audit derives
+  from the filesystem.
 
 ## Skills
 
