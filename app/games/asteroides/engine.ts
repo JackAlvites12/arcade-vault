@@ -36,6 +36,15 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
 
+// Compacta el array en el propio buffer (sin allocation nueva por frame).
+function removeDead<T extends { dead: boolean }>(arr: T[]) {
+  let write = 0;
+  for (let read = 0; read < arr.length; read++) {
+    if (!arr[read].dead) arr[write++] = arr[read];
+  }
+  arr.length = write;
+}
+
 class Bullet {
   x: number;
   y: number;
@@ -338,6 +347,7 @@ export class AsteroidsEngine {
   private deadTimer = 0;
   private powerUpSpawned = false;
   private killsSinceSpawn = 0;
+  private readonly newAsteroidsScratch: Asteroid[] = [];
 
   constructor() {
     this.restart();
@@ -411,16 +421,16 @@ export class AsteroidsEngine {
 
   update(dt: number, input: EngineInput) {
     if (this.state === "gameover") {
-      this.particles.forEach((p) => p.update(dt));
-      this.particles = this.particles.filter((p) => !p.dead);
+      for (const p of this.particles) p.update(dt);
+      removeDead(this.particles);
       return;
     }
 
     if (this.state === "dead") {
       this.deadTimer -= dt;
-      this.particles.forEach((p) => p.update(dt));
-      this.particles = this.particles.filter((p) => !p.dead);
-      this.asteroids.forEach((a) => a.update(dt));
+      for (const p of this.particles) p.update(dt);
+      removeDead(this.particles);
+      for (const a of this.asteroids) a.update(dt);
       if (this.deadTimer <= 0) {
         this.state = "playing";
         this.ship.reset();
@@ -433,14 +443,14 @@ export class AsteroidsEngine {
     }
 
     this.ship.update(dt, input);
-    this.bullets.forEach((b) => b.update(dt));
-    this.asteroids.forEach((a) => a.update(dt));
-    this.particles.forEach((p) => p.update(dt));
-    this.powerUps.forEach((p) => p.update(dt));
+    for (const b of this.bullets) b.update(dt);
+    for (const a of this.asteroids) a.update(dt);
+    for (const p of this.particles) p.update(dt);
+    for (const p of this.powerUps) p.update(dt);
 
-    this.bullets = this.bullets.filter((b) => !b.dead);
-    this.particles = this.particles.filter((p) => !p.dead);
-    this.powerUps = this.powerUps.filter((p) => !p.dead);
+    removeDead(this.bullets);
+    removeDead(this.particles);
+    removeDead(this.powerUps);
 
     for (const p of this.powerUps) {
       if (!p.dead && dist(this.ship, p) < this.ship.radius + p.radius) {
@@ -449,7 +459,8 @@ export class AsteroidsEngine {
       }
     }
 
-    const newAsteroids: Asteroid[] = [];
+    const newAsteroids = this.newAsteroidsScratch;
+    newAsteroids.length = 0;
     for (const b of this.bullets) {
       for (const a of this.asteroids) {
         if (!a.dead && !b.dead && dist(b, a) < a.radius) {
@@ -457,7 +468,7 @@ export class AsteroidsEngine {
           a.dead = true;
           this.score += POINTS[a.size];
           this.explode(a.x, a.y, a.size * 5);
-          newAsteroids.push(...a.split());
+          for (const child of a.split()) newAsteroids.push(child);
           if (!this.powerUpSpawned) {
             this.killsSinceSpawn++;
             const guaranteed = this.killsSinceSpawn >= 5;
@@ -469,8 +480,9 @@ export class AsteroidsEngine {
         }
       }
     }
-    this.asteroids = this.asteroids.filter((a) => !a.dead).concat(newAsteroids);
-    this.bullets = this.bullets.filter((b) => !b.dead);
+    removeDead(this.asteroids);
+    for (const a of newAsteroids) this.asteroids.push(a);
+    removeDead(this.bullets);
 
     if (this.ship.invincible <= 0) {
       for (const a of this.asteroids) {
@@ -489,10 +501,10 @@ export class AsteroidsEngine {
     ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
-    this.particles.forEach((p) => p.draw(ctx, skin));
-    this.asteroids.forEach((a) => a.draw(ctx, skin));
-    this.powerUps.forEach((p) => p.draw(ctx, skin));
-    this.bullets.forEach((b) => b.draw(ctx, skin));
+    for (const p of this.particles) p.draw(ctx, skin);
+    for (const a of this.asteroids) a.draw(ctx, skin);
+    for (const p of this.powerUps) p.draw(ctx, skin);
+    for (const b of this.bullets) b.draw(ctx, skin);
     this.ship.draw(ctx, skin);
   }
 }

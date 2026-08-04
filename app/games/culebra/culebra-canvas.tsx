@@ -3,6 +3,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { CulebraEngine, type EngineInput, type EngineSnapshot } from "./engine";
 import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
+import { useFpsCounter } from "@/app/lib/use-fps-counter";
+
+const SHOW_FPS = process.env.NODE_ENV !== "production";
 
 export interface CulebraCanvasHandle {
   restart(): void;
@@ -50,6 +53,8 @@ export const CulebraCanvas = forwardRef<
   onSnapshotRef.current = onSnapshot;
   const requestedDirectionRef = useRef<Direction | null>(null);
   const dpadTouchIds = useRef<Partial<Record<Direction, number>>>({});
+
+  const fps = useFpsCounter(SHOW_FPS);
 
   const handleDpadTouchStart = (dir: Direction, e: React.TouchEvent) => {
     e.preventDefault();
@@ -158,6 +163,7 @@ export const CulebraCanvas = forwardRef<
       className="absolute inset-0 flex items-center justify-center"
     >
       <canvas ref={canvasRef} className="block" />
+      {SHOW_FPS && <div className="fps-overlay">{fps} FPS</div>}
       <div className="touch-dpad">
         {DPAD_BUTTONS.map(({ dir, label }) => (
           <button

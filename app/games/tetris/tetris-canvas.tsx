@@ -3,6 +3,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { TetrisEngine, type EngineInput, type EngineSnapshot } from "./engine";
 import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
+import { useFpsCounter } from "@/app/lib/use-fps-counter";
+
+const SHOW_FPS = process.env.NODE_ENV !== "production";
 
 export interface TetrisCanvasHandle {
   restart(): void;
@@ -40,6 +43,8 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
     pausedRef.current = paused;
     const onSnapshotRef = useRef(onSnapshot);
     onSnapshotRef.current = onSnapshot;
+
+    const fps = useFpsCounter(SHOW_FPS);
 
     useEffect(() => {
       if (engineRef.current) engineRef.current.skin = SKINS[skin];
@@ -227,6 +232,7 @@ export const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(
         className="absolute inset-0 flex items-center justify-center"
       >
         <canvas ref={canvasRef} className="block touch-none" />
+        {SHOW_FPS && <div className="fps-overlay">{fps} FPS</div>}
         <div className="absolute top-3 right-3 border border-line bg-bg/80 p-1">
           <canvas ref={nextCanvasRef} className="block" />
         </div>

@@ -8,6 +8,9 @@ import {
 } from "./engine";
 import { loadSpritesheet } from "./spritesheet";
 import { SKINS, DEFAULT_SKIN, type SkinName } from "./skins";
+import { useFpsCounter } from "@/app/lib/use-fps-counter";
+
+const SHOW_FPS = process.env.NODE_ENV !== "production";
 
 export interface ArkanoidCanvasHandle {
   restart(): void;
@@ -35,6 +38,8 @@ export const ArkanoidCanvas = forwardRef<
   pausedRef.current = paused;
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+
+  const fps = useFpsCounter(SHOW_FPS);
 
   useEffect(() => {
     if (engineRef.current) engineRef.current.skin = SKINS[skin];
@@ -164,6 +169,7 @@ export const ArkanoidCanvas = forwardRef<
   return (
     <div ref={containerRef} className="absolute inset-0 touch-none">
       <canvas ref={canvasRef} className="block" />
+      {SHOW_FPS && <div className="fps-overlay">{fps} FPS</div>}
     </div>
   );
 });
