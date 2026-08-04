@@ -13,6 +13,9 @@ import {
   type EngineSnapshot,
 } from "./engine";
 import { DEFAULT_SKIN, SKINS, type SkinName } from "./skins";
+import { useFpsCounter } from "@/app/lib/use-fps-counter";
+
+const SHOW_FPS = process.env.NODE_ENV !== "production";
 
 export interface AsteroidsCanvasHandle {
   restart(): void;
@@ -43,6 +46,8 @@ export const AsteroidsCanvas = forwardRef<
   pausedRef.current = paused;
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+
+  const fps = useFpsCounter(SHOW_FPS);
 
   const [joystickOffset, setJoystickOffset] = useState({ x: 0, y: 0 });
   const joystickTouchId = useRef<number | null>(null);
@@ -181,6 +186,12 @@ export const AsteroidsCanvas = forwardRef<
 
     let rafId = 0;
     let lastTime: number | null = null;
+    const input: EngineInput = {
+      left: false,
+      right: false,
+      thrust: false,
+      shoot: false,
+    };
 
     const loop = (ts: number) => {
       rafId = requestAnimationFrame(loop);
@@ -188,12 +199,10 @@ export const AsteroidsCanvas = forwardRef<
       lastTime = ts;
 
       if (!pausedRef.current) {
-        const input: EngineInput = {
-          left: !!keys["ArrowLeft"] || touchLeftRef.current,
-          right: !!keys["ArrowRight"] || touchRightRef.current,
-          thrust: !!keys["ArrowUp"] || touchThrustRef.current,
-          shoot: !!justPressed["Space"] || touchShootRef.current,
-        };
+        input.left = !!keys["ArrowLeft"] || touchLeftRef.current;
+        input.right = !!keys["ArrowRight"] || touchRightRef.current;
+        input.thrust = !!keys["ArrowUp"] || touchThrustRef.current;
+        input.shoot = !!justPressed["Space"] || touchShootRef.current;
         justPressed["Space"] = false;
         touchShootRef.current = false;
         engine.update(dt, input);
@@ -215,6 +224,7 @@ export const AsteroidsCanvas = forwardRef<
   return (
     <div ref={containerRef} className="absolute inset-0">
       <canvas ref={canvasRef} className="block" />
+      {SHOW_FPS && <div className="fps-overlay">{fps} FPS</div>}
       <div className="touch-controls">
         <div
           className="touch-joystick-base"
