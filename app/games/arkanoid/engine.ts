@@ -141,6 +141,15 @@ const collideAABB = (ball: Ball, block: Block) =>
   ball.y < block.y + block.h &&
   ball.y + ball.h > block.y;
 
+// Compacta el array en el propio buffer (sin allocation nueva por frame).
+function removeExpired(arr: Explosion[]) {
+  let write = 0;
+  for (let read = 0; read < arr.length; read++) {
+    if (arr[read].elapsed < EXPLOSION_DURATION) arr[write++] = arr[read];
+  }
+  arr.length = write;
+}
+
 export class ArkanoidEngine {
   static readonly WIDTH = W;
   static readonly HEIGHT = H;
@@ -186,9 +195,7 @@ export class ArkanoidEngine {
   }
 
   getEvents(): EngineEvent[] {
-    const events = this.events;
-    this.events = [];
-    return events;
+    return this.events;
   }
 
   private initBall() {
@@ -215,6 +222,9 @@ export class ArkanoidEngine {
   }
 
   update(dt: number, input: EngineInput) {
+    // Consumido por el caller (getEvents) al final del frame anterior; se
+    // limpia en el propio buffer en vez de reasignar un array nuevo.
+    this.events.length = 0;
     if (this.state !== "playing") return;
 
     const paddle = this.paddle;
@@ -282,9 +292,7 @@ export class ArkanoidEngine {
     }
 
     for (const exp of this.explosions) exp.elapsed += dt * 1000;
-    this.explosions = this.explosions.filter(
-      (exp) => exp.elapsed < EXPLOSION_DURATION,
-    );
+    removeExpired(this.explosions);
 
     if (ball.y > H) {
       this.lives--;
