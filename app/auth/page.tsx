@@ -1,26 +1,78 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import type { AuthError } from "@supabase/supabase-js";
 import { useSession } from "@/app/session-context";
 import { Button } from "@/app/components/button";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+function mapAuthError(error: AuthError): string {
+  switch (error.message) {
+    case "Invalid login credentials":
+      return "Credenciales inválidas";
+    case "User already registered":
+      return "Ese correo ya está registrado";
+    case "Email not confirmed":
+      return "Confirma tu correo antes de iniciar sesión";
+    default:
+      return error.message;
+  }
+}
 
 export default function AuthPage() {
   const [tab, setTab] = useState<"in" | "up">("in");
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const { login } = useSession();
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const { user } = useSession();
   const router = useRouter();
 
-  const submit = (e: FormEvent) => {
+  useEffect(() => {
+    if (user) router.replace("/biblioteca");
+  }, [user, router]);
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    login({ name: (user || "PLAYER1").toUpperCase().slice(0, 10) });
-    router.push("/biblioteca");
+    setError(null);
+    setNotice(null);
+    const supabase = getSupabaseBrowserClient();
+
+    if (tab === "in") {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: pass,
+      });
+      if (error) {
+        setError(mapAuthError(error));
+        return;
+      }
+      router.push("/biblioteca");
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: pass,
+        options: { data: { name } },
+      });
+      if (error) {
+        setError(mapAuthError(error));
+        return;
+      }
+      setNotice("Revisa tu correo para confirmar tu cuenta.");
+    }
+  };
+
+  const loginWithOAuth = (provider: "google" | "github") => {
+    setError(null);
+    getSupabaseBrowserClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
   };
 
   const playAsGuest = () => {
-    login(null);
     router.push("/biblioteca");
   };
 
@@ -38,7 +90,11 @@ export default function AuthPage() {
         <div className="my-4.5 grid grid-cols-2 border border-line">
           <button
             type="button"
-            onClick={() => setTab("in")}
+            onClick={() => {
+              setTab("in");
+              setError(null);
+              setNotice(null);
+            }}
             className={`cursor-pointer px-3 py-3 font-pixel text-[9px] tracking-[0.14em] ${
               tab === "in"
                 ? "bg-cyan/8 text-cyan [text-shadow:0_0_6px_rgba(0,245,255,0.5)]"
@@ -49,7 +105,11 @@ export default function AuthPage() {
           </button>
           <button
             type="button"
-            onClick={() => setTab("up")}
+            onClick={() => {
+              setTab("up");
+              setError(null);
+              setNotice(null);
+            }}
             className={`cursor-pointer px-3 py-3 font-pixel text-[9px] tracking-[0.14em] ${
               tab === "up"
                 ? "bg-cyan/8 text-cyan [text-shadow:0_0_6px_rgba(0,245,255,0.5)]"
@@ -61,31 +121,31 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={submit} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
-              Usuario
-            </span>
-            <input
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              placeholder="px_kai"
-              className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
-            />
-          </label>
           {tab === "up" && (
             <label className="slide-in flex flex-col gap-1.5">
               <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
-                Correo electrónico
+                Usuario
               </span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jugador@vault.gg"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="px_kai"
                 className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
               />
             </label>
           )}
+          <label className="flex flex-col gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+              Correo electrónico
+            </span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jugador@vault.gg"
+              className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
+            />
+          </label>
           <label className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
               Contraseña
@@ -98,6 +158,17 @@ export default function AuthPage() {
               className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
             />
           </label>
+
+          {error && (
+            <div className="font-mono text-[11px] tracking-wide text-magenta">
+              {error}
+            </div>
+          )}
+          {notice && (
+            <div className="font-mono text-[11px] tracking-wide text-cyan">
+              {notice}
+            </div>
+          )}
 
           <Button type="submit" size="lg" className="mt-2 w-full">
             {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
@@ -118,10 +189,20 @@ export default function AuthPage() {
           O CONTINÚA CON
         </div>
         <div className="grid grid-cols-2 gap-2.5">
-          <Button type="button" variant="ghost" className="text-[9px]">
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-[9px]"
+            onClick={() => loginWithOAuth("google")}
+          >
             ◆ GOOGLE
           </Button>
-          <Button type="button" variant="ghost" className="text-[9px]">
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-[9px]"
+            onClick={() => loginWithOAuth("github")}
+          >
             ▣ GITHUB
           </Button>
         </div>
