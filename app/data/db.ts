@@ -50,10 +50,16 @@ export async function saveScore(
   gameId: string,
   playerName: string,
   score: number,
+  userId?: string,
 ): Promise<void> {
   const supabase = createSupabaseClient();
   const { error } = await supabase
     .from("scores")
-    .insert({ game_id: gameId, player_name: playerName, score });
+    .insert({
+      game_id: gameId,
+      player_name: playerName,
+      score,
+      user_id: userId ?? null,
+    });
   if (error) throw error;
 }

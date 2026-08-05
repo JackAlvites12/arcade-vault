@@ -70,7 +70,8 @@ export function JugarClient({ game }: { game: Game }) {
   const [engineLevel, setEngineLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(user ? user.name : "INVITADO");
+  const [guestName, setGuestName] = useState("INVITADO");
+  const name = user ? user.name : guestName;
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [skin, setSkin] = useState<SkinName>(DEFAULT_SKIN);
@@ -154,7 +155,7 @@ export function JugarClient({ game }: { game: Game }) {
   const handleSave = async () => {
     if (isRealGame) {
       setSaving(true);
-      await saveScore(game.id, name, score);
+      await saveScore(game.id, name, score, user?.id);
       setSaving(false);
     }
     setSaved(true);
@@ -301,10 +302,11 @@ export function JugarClient({ game }: { game: Game }) {
                 <input
                   value={name}
                   onChange={(e) =>
-                    setName(e.target.value.toUpperCase().slice(0, 10))
+                    setGuestName(e.target.value.toUpperCase().slice(0, 10))
                   }
+                  disabled={!!user}
                   placeholder="TUS INICIALES"
-                  className="h-11 flex-1 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_10px_rgba(0,245,255,0.35)]"
+                  className="h-11 flex-1 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_10px_rgba(0,245,255,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <Button variant="yellow" onClick={handleSave} disabled={saving}>
                   GUARDAR PUNTUACIÓN
