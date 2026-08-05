@@ -90,6 +90,16 @@ one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` re
   (`.touch-dpad`, `.touch-controls`, `.touch-joystick-*`, `.touch-shoot-btn`) — only adds around them.
   Never touches `engine.ts`, `EngineInput`, scoring, or `saveScore`. No memory file: the audit derives
   from the filesystem.
+- `game-performance-booster` — audits and hardens the performance of **one real-engine game at a
+  time**, received by id (unlike `skin-designer`/`mobile-porter`, it is scoped per invocation by
+  design, never full-site). Applies the closed checklist from `specs/12-endurecimiento-rendimiento-mobile.md`
+  to that game's `engine.ts` and `<id>-canvas.tsx`: no per-frame allocations in the RAF/`update(dt)`
+  loop, `devicePixelRatio`/canvas size cached and recomputed only on resize, static elements (background,
+  grid, board border) not redrawn when unchanged, touch listeners from spec 11 without redundant
+  per-event work, and the dev-only FPS overlay (`app/lib/use-fps-counter.ts`) wired if missing. Stops
+  immediately if the id has no `engine.ts` (placeholder). Never touches gameplay, scoring, or the shape
+  of `EngineInput`/`EngineSnapshot`/`EngineState`; never redesigns spec 11's touch controls, only
+  reviews their per-event cost. No memory file: the id is supplied on every invocation.
 
 ## Skills
 
