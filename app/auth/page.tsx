@@ -1,11 +1,27 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { useSession } from "@/app/session-context";
 import { Button } from "@/app/components/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+interface PasswordRule {
+  label: string;
+  test: (value: string) => boolean;
+}
+
+const PASSWORD_RULES: PasswordRule[] = [
+  { label: "Mínimo 8 caracteres", test: (v) => v.length >= 8 },
+  { label: "Una minúscula", test: (v) => /[a-z]/.test(v) },
+  { label: "Una mayúscula", test: (v) => /[A-Z]/.test(v) },
+  { label: "Un número", test: (v) => /[0-9]/.test(v) },
+  {
+    label: "Un símbolo",
+    test: (v) => /[!@#$%^&*()_+\-=[\]{};':"|,.<>/?~`]/.test(v),
+  },
+];
 
 function mapAuthError(error: AuthError): string {
   switch (error.message) {
@@ -27,8 +43,18 @@ export default function AuthPage() {
   const [pass, setPass] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [passFocused, setPassFocused] = useState(false);
   const { user } = useSession();
   const router = useRouter();
+
+  const passwordChecks = useMemo(
+    () =>
+      tab === "up"
+        ? PASSWORD_RULES.map((rule) => ({ ...rule, passed: rule.test(pass) }))
+        : [],
+    [tab, pass],
+  );
+  const passwordValid = passwordChecks.every((rule) => rule.passed);
 
   useEffect(() => {
     if (user) router.replace("/biblioteca");
@@ -146,7 +172,7 @@ export default function AuthPage() {
               className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
             />
           </label>
-          <label className="flex flex-col gap-1.5">
+          <label className="relative flex flex-col gap-1.5">
             <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
               Contraseña
             </span>
@@ -154,9 +180,25 @@ export default function AuthPage() {
               type="password"
               value={pass}
               onChange={(e) => setPass(e.target.value)}
+              onFocus={() => setPassFocused(true)}
+              onBlur={() => {
+                if (passwordValid) setPassFocused(false);
+              }}
               placeholder="••••••••"
               className="h-11 border border-line bg-bg px-3 font-mono outline-none focus:border-cyan focus:shadow-[0_0_12px_rgba(0,245,255,0.35)]"
             />
+            {tab === "up" && passFocused && (
+              <ul className="absolute left-0 top-full z-10 mt-1 w-full border border-line bg-bg-2 p-2.5 font-mono text-[10px] tracking-wide shadow-[0_0_16px_rgba(0,245,255,0.25)]">
+                {passwordChecks.map((rule) => (
+                  <li
+                    key={rule.label}
+                    className={rule.passed ? "text-cyan" : "text-ink-faint"}
+                  >
+                    {rule.passed ? "✓" : "·"} {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </label>
 
           {error && (
@@ -170,7 +212,12 @@ export default function AuthPage() {
             </div>
           )}
 
-          <Button type="submit" size="lg" className="mt-2 w-full">
+          <Button
+            type="submit"
+            size="lg"
+            className="mt-2 w-full"
+            disabled={tab === "up" && !passwordValid}
+          >
             {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
           </Button>
         </form>
