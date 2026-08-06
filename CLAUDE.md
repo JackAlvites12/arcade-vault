@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Arcade Vault is a retro arcade web platform: a catalog of browser-playable minigames where users compete
 for the highest score on leaderboards. It combines a browsable catalog (`/biblioteca`), a hall-of-fame
 (`/salon`), per-game detail pages with a leaderboard (`/juego/[id]`), and a generic player (`/jugar/[id]`)
-that mounts each game's specific engine. Four games have a real engine (`asteroides`, `tetris`, `arkanoid`,
-`culebra`); the rest still use a generic placeholder. The game catalog and the leaderboards of the four
+that mounts each game's specific engine. Five games have a real engine (`asteroides`, `tetris`, `arkanoid`,
+`culebra`, `frogger`); the rest still use a generic placeholder. The game catalog and the leaderboards of the
 real games are backed by Supabase; the remaining games still show `seededScores()` mock data.
 
 ## Idioma
@@ -21,7 +21,7 @@ Always answer in Spanish, in all sessions.
 
 This project follows spec-driven development via project skills in `.claude/skills/` (`spec`, `spec-impl`,
 `caveman`, `frontend-design` mirrored in `.agents/skills/` and installed from GitHub — see
-`skills-lock.json`; `pr` and `add-game` are local to this repo):
+`skills-lock.json`; `pr`, `add-game` and `spec-impl-game` are local to this repo):
 
 - `/spec` — designs a new spec interactively (clarifying questions first, no code) and saves it under
   `specs/NN-name.md` using `specs/.../template.md`. A spec only moves to implementation once its status
@@ -31,13 +31,19 @@ This project follows spec-driven development via project skills in `.claude/skil
   `/spec` to write the file. Never writes code. Always assumes a real Supabase leaderboard.
 - `/spec-impl <NN-spec-name>` — reads the approved spec, creates/checks out a branch named after it, and
   implements it step by step with pauses to review diffs.
+- `/spec-impl-game <NN-spec-name>` — variant of `/spec-impl` for specs that add a new game (from
+  `/add-game` or a promoted game-jam spec): invokes `/spec-impl` live for the implementation, then chains
+  `skin-designer` and `mobile-porter` once the acceptance criteria are done, to close the visual/responsive
+  layer of what was just added.
 - `/pr` — orchestrates committing work and opening the PR once a spec is implemented (see
   `specs/05-orquestador-pr.md`).
 
 Existing specs in `specs/`: `01-mvp-visual`, `02-home`, `03-about-contact-form`, `04-supabase-setup`,
 `05-orquestador-pr`, `06-asteroides`, `07-leaderboard-y-tabla-juegos`, `08-implement-tetris-game`,
-`09-implement-arkanoid-game`, `10-implement-culebra-game`. Read the two most recent before writing a new
-one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` regardless of date.
+`09-implement-arkanoid-game`, `10-implement-culebra-game`, `11-controles-tactiles`,
+`12-endurecimiento-rendimiento-mobile`, `13-autenticacion-supabase`, `14-checklist-seguridad-basico`. Read
+the two most recent before writing a new one (per `/spec`); for a new game, `/add-game` mandates reading
+`06` and `07` regardless of date.
 
 `references/started-games/` holds the source prototypes to port: `02-asteroids` (done), `03-tetris` (done),
 `04-arkanoid` (done).
@@ -79,9 +85,9 @@ one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` re
   alternative spritesheets. Never touches gameplay, scoring or `saveScore`; placeholder games (no
   `engine.ts`) are out of scope. No memory file: the audit derives from the filesystem.
 - `mobile-porter` — audits and implements responsive/mobile layout for the **whole site** (not just
-  the 4 real-engine games): home, `/biblioteca`, `/salon`, `/juego/[id]`, `/jugar/[id]`, `/acerca`,
+  the real-engine games): home, `/biblioteca`, `/salon`, `/juego/[id]`, `/jugar/[id]`, `/acerca`,
   `/auth`. Complements `specs/11-controles-tactiles.md`, which already covers touch controls and the
-  compact HUD for the 4 real engines — this agent fills the gap that spec left out: layout,
+  compact HUD for the real engines — this agent fills the gap that spec left out: layout,
   typography, spacing, and nav in a mobile viewport, a concern every other spec only ever mentioned
   as a loose checklist item. "Mobile" here means the same Next.js site viewed in a mobile browser —
   there's no native app or PWA in this repo. Prefers Tailwind utilities already used in a file, then
@@ -100,6 +106,15 @@ one (per `/spec`); for a new game, `/add-game` mandates reading `06` and `07` re
   immediately if the id has no `engine.ts` (placeholder). Never touches gameplay, scoring, or the shape
   of `EngineInput`/`EngineSnapshot`/`EngineState`; never redesigns spec 11's touch controls, only
   reviews their per-event cost. No memory file: the id is supplied on every invocation.
+- `security-auditor` — audits security of the Supabase database (RLS, advisors, Auth protections) and of
+  the application (HTTP headers, input validation, secret handling, auth flow). Read-only: never edits
+  app code or applies migrations, only reads and runs read-only queries/advisors, returning a findings
+  report with severity. Memory lives in `references/security/security-findings.md` (append-only table,
+  columns hallazgo/área/severidad/veredicto: `pendiente`/`resuelto`/`aceptado-riesgo`/`no-aplica`), updated
+  in place rather than duplicated. Fixes are left for the user or a future spec (precedent: specs 13 and
+  14) — unlike `skin-designer`/`mobile-porter`/`game-performance-booster`, this agent never implements
+  fixes itself. Complements, not replaces, the generic `/security-review` skill (which reviews the current
+  branch's pending diff): this agent audits the full repo and Supabase project state.
 
 ## Skills
 
@@ -116,9 +131,10 @@ than relying on prior Next.js knowledge.
 ### Data layer (Supabase)
 
 `app/data/db.ts` is the only data access layer: `getGames()`, `getGame(id)`, `getTopScores(gameId, limit)`,
-`saveScore(gameId, playerName, score)`, over the Supabase tables `games` and `scores` (public RLS: read on
-both, insert on `scores`). Schema lives only in Supabase — applied via MCP `apply_migration`, no local
-`supabase/migrations` folder. See `specs/07-leaderboard-y-tabla-juegos.md`.
+`saveScore(gameId, playerName, score, userId?)`, over the Supabase tables `games` and `scores` (public RLS:
+read on both, insert on `scores`). Schema lives only in Supabase — applied via MCP `apply_migration`, no
+local `supabase/migrations` folder. See `specs/07-leaderboard-y-tabla-juegos.md` and
+`specs/13-autenticacion-supabase.md` (`scores.user_id`).
 
 `app/data/games.ts` no longer holds the game catalog: it keeps only the types (`Game`, `ScoreRow`,
 `GameCategory`, `GameColor`), `CATS`, `PLAYERS` and `seededScores()` — the deterministic LCG mock still used
@@ -143,7 +159,7 @@ primitives (`button`, `chip`, `cover-art`, `game-card`, `home-sections`, `nav`).
 
 ### Per-game engines
 
-Four games follow the same pattern under `app/games/<id>/`: a pure `engine.ts` (game-state simulation,
+Five games follow the same pattern under `app/games/<id>/`: a pure `engine.ts` (game-state simulation,
 `EngineState`/`EngineSnapshot`/`EngineInput`, score/lives/level) plus a `<id>-canvas.tsx` client component
 (`<canvas>` rendering + scoped keyboard/mouse input, `forwardRef` handle with `restart()`/`forceGameOver()`,
 DPR-aware resize via `ResizeObserver`, single Strict-Mode-safe mount effect) that reports snapshots up via
@@ -155,12 +171,24 @@ pattern with a real Supabase leaderboard from day one, never extend the placehol
 
 ### Auth and session
 
-`app/session-context.tsx` (`SessionProvider`/`useSession`) is an in-memory, client-only session (no
-persistence across reloads) used to greet the user and prefill the score-save name in the player page.
-`app/auth/page.tsx` is the login/register screen. Real auth is backed by Supabase (`lib/supabase/client.ts`,
-`createSupabaseClient()` reads `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, throws if
-missing) — see `specs/04-supabase-setup.md`. Scores are saved with a free-text `player_name`, not linked to
-an authenticated user. `app/api/health/supabase/route.ts` is a connectivity health check.
+Real auth backed by Supabase Auth (`specs/13-autenticacion-supabase.md`): email/password (with mandatory
+email confirmation) plus Google and Github OAuth. `app/session-context.tsx` (`SessionProvider`/`useSession`)
+mirrors the real Supabase session (`getSession` + `onAuthStateChange`) via
+`lib/supabase/client.ts`'s `getSupabaseBrowserClient()`, persisted in `localStorage` (survives reload) — no
+`@supabase/ssr`, cookies, or `middleware.ts`. `app/auth/callback/page.tsx` handles the OAuth return
+(`exchangeCodeForSession`) and redirects to `/biblioteca`; `/auth` itself redirects there too when a session
+is already active. Guest mode (`playAsGuest`) is untouched. `app/auth/page.tsx` is the login/register screen;
+its "CREAR CUENTA" tab shows a live password-requirements checklist (`PASSWORD_RULES`: length, lowercase,
+uppercase, digit, symbol) as a tooltip and disables submit until all rules pass
+(`specs/14-checklist-seguridad-basico.md`). Scores are saved via `saveScore(gameId, playerName, score,
+userId?)` — `scores.user_id` (nullable, FK to `auth.users`) links a score to the logged-in user when there
+is a session, stays `null` in guest mode. `app/api/health/supabase/route.ts` is a connectivity health check.
+
+`next.config.ts` sets 3 security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Referrer-Policy: strict-origin-when-cross-origin`) on every route via `headers()`. Known accepted-risk
+security findings (leaked-password protection needs a paid Supabase plan; public `scores` insert without
+server-side range/length validation) are tracked in `references/security/security-findings.md`, maintained
+by the `security-auditor` subagent — see specs `13` and `14`.
 
 ### Contact form
 
